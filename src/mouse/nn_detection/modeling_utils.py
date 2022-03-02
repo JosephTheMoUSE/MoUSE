@@ -28,30 +28,36 @@ class BackboneBlock(nn.Module):
        (when 0 - equivalent to ReLU).
     """
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 kernel_size: Tuple,
-                 stride: Union[int, Tuple] = 1,
-                 padding: Union[int, Tuple, str] = 1,
-                 negative_slope: float = 0.01,
-                 padding_mode: str = 'zeros'):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: Tuple,
+        stride: Union[int, Tuple] = 1,
+        padding: Union[int, Tuple, str] = 1,
+        negative_slope: float = 0.01,
+        padding_mode: str = "zeros",
+    ):
         super().__init__()
         self.layers = nn.Sequential(
-            nn.Conv2d(in_channels=in_channels,
-                      out_channels=out_channels,
-                      kernel_size=kernel_size,
-                      stride=stride,
-                      padding=padding,
-                      padding_mode=padding_mode),
+            nn.Conv2d(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                padding_mode=padding_mode,
+            ),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.BatchNorm2d(out_channels),
-            nn.Conv2d(in_channels=out_channels,
-                      out_channels=out_channels,
-                      kernel_size=kernel_size,
-                      stride=stride,
-                      padding=padding,
-                      padding_mode=padding_mode),
+            nn.Conv2d(
+                in_channels=out_channels,
+                out_channels=out_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                padding_mode=padding_mode,
+            ),
             nn.LeakyReLU(negative_slope=negative_slope),
             nn.BatchNorm2d(out_channels),
         )
@@ -96,42 +102,46 @@ def get_backbone(model_name: str,
     torch.nn.Module
         Backbone model.
     """
-    if model_name == 'custom':
+    if model_name == "custom":
         backbone = get_custom_backbone()
         out_channels = 32
-    elif model_name == 'resnet-18':
+    elif model_name == "resnet-18":
         resnet = models.resnet18(pretrained=False)
-        resnet.conv1 = nn.Conv2d(in_channels=1,
-                                 out_channels=64,
-                                 kernel_size=(5, 5),
-                                 stride=(2, 2),
-                                 padding=(3, 3),
-                                 bias=False)
+        resnet.conv1 = nn.Conv2d(
+            in_channels=1,
+            out_channels=64,
+            kernel_size=(5, 5),
+            stride=(2, 2),
+            padding=(3, 3),
+            bias=False,
+        )
         resnet = nn.Sequential(*list(resnet.children())[:-2])
 
         backbone = resnet
         out_channels = 512
-    elif model_name.startswith('resnet-50'):
+    elif model_name.startswith("resnet-50"):
         resnet = models.resnet50(pretrained=False)
-        resnet.conv1 = nn.Conv2d(in_channels=1,
-                                 out_channels=64,
-                                 kernel_size=(7, 7),
-                                 stride=(2, 2),
-                                 padding=(3, 3),
-                                 bias=False)
+        resnet.conv1 = nn.Conv2d(
+            in_channels=1,
+            out_channels=64,
+            kernel_size=(7, 7),
+            stride=(2, 2),
+            padding=(3, 3),
+            bias=False,
+        )
         resnet = nn.Sequential(*list(resnet.children())[:-2])
         out_channels = 2048
-        if model_name == 'resnet-50/2':
+        if model_name == "resnet-50/2":
             resnet = nn.Sequential(*list(resnet.children())[:6])
             out_channels = 512
         backbone = resnet
     else:
-        raise ValueError('Unimplemented backbone')
+        raise ValueError("Unimplemented backbone")
 
     if path is not None and not inference_only:
-        state_dict = torch.load(path, map_location='cpu')
-        if 'state_dict' in state_dict:
-            state_dict = state_dict['state_dict']
+        state_dict = torch.load(path, map_location="cpu")
+        if "state_dict" in state_dict:
+            state_dict = state_dict["state_dict"]
         backbone.load_state_dict(state_dict)
 
     backbone.out_channels = out_channels
@@ -167,9 +177,8 @@ class Normalize(nn.Module):
             target_index = targets[i] if targets is not None else None
 
             if image.dim() != 3:
-                raise ValueError(
-                    "images is expected to be a list of 3d tensors "
-                    "of shape [C, H, W], got {}".format(image.shape))
+                raise ValueError("images is expected to be a list of 3d tensors "
+                                 "of shape [C, H, W], got {}".format(image.shape))
             image = self._normalize(image)
             images[i] = image
             if targets is not None and target_index is not None:
@@ -218,19 +227,19 @@ class Normalize(nn.Module):
     def postprocess(self, result, image_shapes, original_image_sizes):
         if self.training:
             return result
-        for i, (pred, im_s, o_im_s) in \
-                enumerate(zip(result, image_shapes, original_image_sizes)):
+        for i, (pred, im_s,
+                o_im_s) in enumerate(zip(result, image_shapes, original_image_sizes)):
             boxes = pred["boxes"]
             boxes = _resize_boxes(boxes, im_s, o_im_s)
             result[i]["boxes"] = boxes
         return result
 
     def __repr__(self):
-        format_string = self.__class__.__name__ + '('
-        _indent = '\n    '
-        format_string += \
-            f"{_indent}Normalize(mean={self.image_mean}, std={self.image_std})"
-        format_string += '\n)'
+        format_string = self.__class__.__name__ + "("
+        _indent = "\n    "
+        format_string += (
+            f"{_indent}Normalize(mean={self.image_mean}, std={self.image_std})")
+        format_string += "\n)"
         return format_string
 
 

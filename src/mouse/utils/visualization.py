@@ -48,10 +48,8 @@ def draw_spectrogram(spec: sound_util.SpectrogramData,
 
     if colormesh is None:
         colormesh = ax.pcolormesh(spec.spec, cmap=cmap, **kwargs)
-        ax_colorbar = ax.inset_axes([1.01, 0.05, .02, 0.95])
-        colorbar.Colorbar(ax=ax_colorbar,
-                          mappable=colormesh,
-                          orientation="vertical")
+        ax_colorbar = ax.inset_axes([1.01, 0.05, 0.02, 0.95])
+        colorbar.Colorbar(ax=ax_colorbar, mappable=colormesh, orientation="vertical")
     else:
         colormesh.set_array(spec.spec.ravel())
         # TODO: check if displayed data is correct without updating colorbar
@@ -66,7 +64,7 @@ def draw_spectrogram(spec: sound_util.SpectrogramData,
             """
             if 0 <= idx < array.shape[0]:
                 return format_str.format(array[int(idx)])
-            return ''
+            return ""
 
         return formatter
 
@@ -74,8 +72,7 @@ def draw_spectrogram(spec: sound_util.SpectrogramData,
     ax.xaxis.set_major_locator(mticker.MaxNLocator(xticks_limit))
     ax.set_xlabel("Time [s]")
 
-    ax.yaxis.set_major_formatter(
-        get_array_formatter(spec.freqs / 1000, freq_format))
+    ax.yaxis.set_major_formatter(get_array_formatter(spec.freqs / 1000, freq_format))
     ax.yaxis.set_major_locator(mticker.MaxNLocator(yticks_limit))
     ax.set_ylabel("Frequency [kHz]")
     return colormesh
@@ -85,8 +82,8 @@ def draw_boxes(boxes: List[data_util.SqueakBox],
                spec_height: int,
                ax: plt.Axes,
                linewidth=1,
-               edgecolor='r',
-               facecolor='none',
+               edgecolor="r",
+               facecolor="none",
                **kwargs) -> List[patches.Rectangle]:
     """Draw bounding boxes `boxes` on axes `ax`.
 
@@ -122,6 +119,5 @@ def draw_boxes(boxes: List[data_util.SqueakBox],
                                  **kwargs)
         rectangles.append(rect)
 
-        # Add the patch to the Axes
         ax.add_patch(rect)
     return rectangles

@@ -51,10 +51,12 @@ def find_USVs(spec: sound_util.SpectrogramData,
         preprocessing_fn = partial(segmentation.inverse_gaussian_gradient,
                                    sigma=5,
                                    alpha=100)
-    for arg, val in [("iterations", 230),
-                     ("smoothing", 0),
-                     ("threshold", 0.9),
-                     ("balloon", -1)]:
+    for arg, val in [
+        ("iterations", 230),
+        ("smoothing", 0),
+        ("threshold", 0.9),
+        ("balloon", -1),
+    ]:
         if arg not in _kwargs:
             _kwargs[arg] = val
 
@@ -62,13 +64,10 @@ def find_USVs(spec: sound_util.SpectrogramData,
 
     init_level_set = level_set_fn(_spec)
 
-    level_set = segmentation. \
-        morphological_geodesic_active_contour(_spec,
-                                              init_level_set=init_level_set,
-                                              **_kwargs)
+    level_set = segmentation.morphological_geodesic_active_contour(
+        _spec, init_level_set=init_level_set, **_kwargs)
 
-    boxes = data_util.find_bounding_boxes(level_set,
-                                          min_side_length=min_side_length)
+    boxes = data_util.find_bounding_boxes(level_set, min_side_length=min_side_length)
 
     if filter:
         return data_util.filter_boxes(spec, boxes)

@@ -117,24 +117,28 @@ class SignalData:
 
     def __repr__(self):
         """Represent `SignalData` with its filename and duration."""
-        return f'name: {self.name}, length: {self.duration} [s]'
+        return f"name: {self.name}, length: {self.duration} [s]"
 
 
-def spectrogram(signal: torch.Tensor,
-                sample_rate=250000,
-                spec_calculator: T.Spectrogram = None,
-                n_fft=512,
-                win_length=512,
-                hop_length=256,
-                power=1,
-                **kwargs) -> SpectrogramData:
+def spectrogram(
+    signal: torch.Tensor,
+    sample_rate=250000,
+    spec_calculator: T.Spectrogram = None,
+    n_fft=512,
+    win_length=512,
+    hop_length=256,
+    power=1,
+    **kwargs,
+) -> SpectrogramData:
     """Create spectrogram from signal array."""
     if spec_calculator is None:
-        spec_calculator = T.Spectrogram(n_fft=n_fft,
-                                        win_length=win_length,
-                                        hop_length=hop_length,
-                                        power=power,
-                                        **kwargs)
+        spec_calculator = T.Spectrogram(
+            n_fft=n_fft,
+            win_length=win_length,
+            hop_length=hop_length,
+            power=power,
+            **kwargs,
+        )
 
     signal = signal.squeeze()
     spec = spec_calculator(signal)
@@ -144,15 +148,17 @@ def spectrogram(signal: torch.Tensor,
     return SpectrogramData(spec=spec, times=times, freqs=freqs)
 
 
-def signal_spectrogram(signal_data: SignalData,
-                       start: float = 0.,
-                       end: float = 1.,
-                       spec_calculator: T.Spectrogram = None,
-                       n_fft=512,
-                       win_length=512,
-                       hop_length=256,
-                       power=1,
-                       **kwargs) -> SpectrogramData:
+def signal_spectrogram(
+    signal_data: SignalData,
+    start: float = 0.0,
+    end: float = 1.0,
+    spec_calculator: T.Spectrogram = None,
+    n_fft=512,
+    win_length=512,
+    hop_length=256,
+    power=1,
+    **kwargs,
+) -> SpectrogramData:
     """Create spectrogram from SignalData object.
 
     Parameters
@@ -169,7 +175,7 @@ def signal_spectrogram(signal_data: SignalData,
     SpectrogramData
         Container with the spectrogram
     """
-    if not (0. <= start <= 1. and 0. <= end <= 1. and start < end):
+    if not (0.0 <= start <= 1.0 and 0.0 <= end <= 1.0 and start < end):
         raise ValueError(
             "'start' and 'end' should be from range [0., 1.] and 'start' must "
             "be smaller than 'end'")
@@ -179,25 +185,29 @@ def signal_spectrogram(signal_data: SignalData,
     end_idx = int(signal_data.signal.shape[0] * end)
     signal = signal_data.signal[start_idx:end_idx]
 
-    spec_data = spectrogram(signal,
-                            sample_rate,
-                            spec_calculator,
-                            n_fft,
-                            win_length,
-                            hop_length,
-                            power,
-                            **kwargs)
+    spec_data = spectrogram(
+        signal,
+        sample_rate,
+        spec_calculator,
+        n_fft,
+        win_length,
+        hop_length,
+        power,
+        **kwargs,
+    )
     time_shift = signal_data.duration * start
     spec_data.times += time_shift
 
     return spec_data
 
 
-def clip_spectrogram(spec: SpectrogramData,
-                     freq_start: Optional[float] = None,
-                     freq_end: Optional[float] = None,
-                     t_start: Optional[float] = None,
-                     t_end: Optional[float] = None) -> SpectrogramData:
+def clip_spectrogram(
+    spec: SpectrogramData,
+    freq_start: Optional[float] = None,
+    freq_end: Optional[float] = None,
+    t_start: Optional[float] = None,
+    t_end: Optional[float] = None,
+) -> SpectrogramData:
     """Extract a smaller spectrogram from `spec`."""
     if t_start is None:
         t_start = spec.t_start
@@ -236,8 +246,5 @@ def clip_spectrogram(spec: SpectrogramData,
 
     clipped_freqs = spec.freqs[min_freq_pixel:max_freq_pixel]
     clipped_times = spec.times[min_t_pixel:max_t_pixel]
-    clipped_spec = spec.spec[min_freq_pixel:max_freq_pixel,
-                             min_t_pixel:max_t_pixel]
-    return SpectrogramData(spec=clipped_spec,
-                           freqs=clipped_freqs,
-                           times=clipped_times)
+    clipped_spec = spec.spec[min_freq_pixel:max_freq_pixel, min_t_pixel:max_t_pixel]
+    return SpectrogramData(spec=clipped_spec, freqs=clipped_freqs, times=clipped_times)

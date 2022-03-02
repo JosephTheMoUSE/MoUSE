@@ -9,8 +9,7 @@ from mouse.utils import data_util
 # Squeak detection metrics
 
 
-def _box_iou(target_box: data_util.SqueakBox,
-             cover_box: data_util.SqueakBox) -> float:
+def _box_iou(target_box: data_util.SqueakBox, cover_box: data_util.SqueakBox) -> float:
     """Compute intersection over union for two squeak boxes.
 
     Parameters
@@ -30,18 +29,18 @@ def _box_iou(target_box: data_util.SqueakBox,
     ValueError
         If any of the boxes doesn't have a positive area.
     """
-    target_area = (target_box.t_end - target_box.t_start + 1) * \
-                  (target_box.freq_end - target_box.freq_start + 1)
-    cover_area = (cover_box.t_end - cover_box.t_start + 1) * \
-                 (cover_box.freq_end - cover_box.freq_start + 1)
+    target_area = (target_box.t_end - target_box.t_start +
+                   1) * (target_box.freq_end - target_box.freq_start + 1)
+    cover_area = (cover_box.t_end - cover_box.t_start + 1) * (cover_box.freq_end -
+                                                              cover_box.freq_start + 1)
 
     if target_area <= 0 or cover_area <= 0:
         raise ValueError("boxes should have positive area")
 
-    intersection_height = min(target_box.freq_end, cover_box.freq_end) - max(
-        target_box.freq_start, cover_box.freq_start) + 1
-    intersection_width = min(target_box.t_end, cover_box.t_end) - max(
-        target_box.t_start, cover_box.t_start) + 1
+    intersection_height = (min(target_box.freq_end, cover_box.freq_end) -
+                           max(target_box.freq_start, cover_box.freq_start) + 1)
+    intersection_width = (min(target_box.t_end, cover_box.t_end) -
+                          max(target_box.t_start, cover_box.t_start) + 1)
     intersection_area = intersection_height * intersection_width
 
     intersection = intersection_area
@@ -52,11 +51,13 @@ def _box_iou(target_box: data_util.SqueakBox,
     return iou
 
 
-def _to_bit_map(squeaks: List[data_util.SqueakBox],
-                freq_start: int,
-                freq_end: int,
-                t_start: int,
-                t_end: int) -> np.array(bool):
+def _to_bit_map(
+    squeaks: List[data_util.SqueakBox],
+    freq_start: int,
+    freq_end: int,
+    t_start: int,
+    t_end: int,
+) -> np.array(bool):
     """Transform squeak list to 2D bit map.
 
     Ranges bounding the bit map are passed separately due to the use cases
@@ -87,7 +88,7 @@ def _to_bit_map(squeaks: List[data_util.SqueakBox],
 
     for squeak in squeaks:
         bit_map[squeak.freq_start - freq_start:squeak.freq_end + 1 - freq_start,
-                squeak.t_start - t_start:squeak.t_end + 1 - t_start] = True
+                squeak.t_start - t_start:squeak.t_end + 1 - t_start,] = True
 
     return bit_map
 
@@ -130,8 +131,7 @@ def _to_bit_map_1d(squeaks: List[data_util.SqueakBox],
         if axis == 0:
             bit_map[squeak.t_start - start:squeak.t_end + 1 - start] = True
         elif axis == 1:
-            bit_map[squeak.freq_start - start:squeak.freq_end + 1 -
-                    start] = True
+            bit_map[squeak.freq_start - start:squeak.freq_end + 1 - start] = True
         else:
             raise ValueError("Axis must be 0 or 1")
 
@@ -197,18 +197,16 @@ def intersection_over_union_elementwise(
         squeaks from `cover` that intersect with squeaks from `target`
         and corresponding intersection over union ratio.
     """
-    target_sorted = sorted(target,
-                           key=lambda squeak: (squeak.t_start, squeak.t_end))
-    cover_sorted = sorted(cover,
-                          key=lambda squeak: (squeak.t_end, squeak.t_start))
+    target_sorted = sorted(target, key=lambda squeak: (squeak.t_start, squeak.t_end))
+    cover_sorted = sorted(cover, key=lambda squeak: (squeak.t_end, squeak.t_start))
 
     result = {target_squeak: dict() for target_squeak in target_sorted}
 
     j_start = 0
     for target_squeak in target_sorted:
 
-        while j_start < len(cover_sorted) and cover_sorted[
-                j_start].t_end < target_squeak.t_start:
+        while (j_start < len(cover_sorted) and
+               cover_sorted[j_start].t_end < target_squeak.t_start):
             j_start += 1
 
         for j in range(j_start, len(cover_sorted)):
@@ -227,9 +225,11 @@ def intersection_over_union_elementwise(
     return result
 
 
-def intersection_over_union_global(prediction: List[data_util.SqueakBox],
-                                   ground_truth: List[data_util.SqueakBox],
-                                   axis: Union[int, None] = None) -> float:
+def intersection_over_union_global(
+    prediction: List[data_util.SqueakBox],
+    ground_truth: List[data_util.SqueakBox],
+    axis: Union[int, None] = None,
+) -> float:
     """Compute overall intersection over union ratio along given axis.
 
     Parameters
@@ -262,11 +262,7 @@ def intersection_over_union_global(prediction: List[data_util.SqueakBox],
         freq_start, freq_end = _get_squeaks_range(squeaks, axis=1)
         t_start, t_end = _get_squeaks_range(squeaks, axis=0)
 
-        prediction_bit = _to_bit_map(prediction,
-                                     freq_start,
-                                     freq_end,
-                                     t_start,
-                                     t_end)
+        prediction_bit = _to_bit_map(prediction, freq_start, freq_end, t_start, t_end)
         ground_truth_bit = _to_bit_map(ground_truth,
                                        freq_start,
                                        freq_end,
@@ -277,22 +273,13 @@ def intersection_over_union_global(prediction: List[data_util.SqueakBox],
         t_start, t_end = _get_squeaks_range(squeaks, axis=0)
 
         prediction_bit = _to_bit_map_1d(prediction, t_start, t_end, axis=axis)
-        ground_truth_bit = _to_bit_map_1d(ground_truth,
-                                          t_start,
-                                          t_end,
-                                          axis=axis)
+        ground_truth_bit = _to_bit_map_1d(ground_truth, t_start, t_end, axis=axis)
 
     elif axis == 1:
         freq_start, freq_end = _get_squeaks_range(squeaks, axis=1)
 
-        prediction_bit = _to_bit_map_1d(prediction,
-                                        freq_start,
-                                        freq_end,
-                                        axis=axis)
-        ground_truth_bit = _to_bit_map_1d(ground_truth,
-                                          freq_start,
-                                          freq_end,
-                                          axis=axis)
+        prediction_bit = _to_bit_map_1d(prediction, freq_start, freq_end, axis=axis)
+        ground_truth_bit = _to_bit_map_1d(ground_truth, freq_start, freq_end, axis=axis)
     else:
         raise ValueError("axis must be 0, 1 or None")
 
@@ -301,9 +288,11 @@ def intersection_over_union_global(prediction: List[data_util.SqueakBox],
     return intersection.sum() / union.sum()
 
 
-def coverage(squeaks_1: List[data_util.SqueakBox],
-             squeaks_2: List[data_util.SqueakBox],
-             axis: Union[int, None] = None):
+def coverage(
+    squeaks_1: List[data_util.SqueakBox],
+    squeaks_2: List[data_util.SqueakBox],
+    axis: Union[int, None] = None,
+):
     """Compute coverage of boxes from both lists.
 
     For both lists a percentage of coverage along `axis` is computed.
@@ -337,28 +326,14 @@ def coverage(squeaks_1: List[data_util.SqueakBox],
     """
     if axis in {0, 1}:
         start, end = _get_squeaks_range(squeaks_1 + squeaks_2, axis=axis)
-        squeaks_1_bit_map = _to_bit_map_1d(squeaks_1,
-                                           start=start,
-                                           end=end,
-                                           axis=axis)
-        squeaks_2_bit_map = _to_bit_map_1d(squeaks_2,
-                                           start=start,
-                                           end=end,
-                                           axis=axis)
+        squeaks_1_bit_map = _to_bit_map_1d(squeaks_1, start=start, end=end, axis=axis)
+        squeaks_2_bit_map = _to_bit_map_1d(squeaks_2, start=start, end=end, axis=axis)
     elif axis is None:
         freq_start, freq_end = _get_squeaks_range(squeaks_1 + squeaks_2, axis=1)
         t_start, t_end = _get_squeaks_range(squeaks_1 + squeaks_2, axis=0)
 
-        squeaks_1_bit_map = _to_bit_map(squeaks_1,
-                                        freq_start,
-                                        freq_end,
-                                        t_start,
-                                        t_end)
-        squeaks_2_bit_map = _to_bit_map(squeaks_2,
-                                        freq_start,
-                                        freq_end,
-                                        t_start,
-                                        t_end)
+        squeaks_1_bit_map = _to_bit_map(squeaks_1, freq_start, freq_end, t_start, t_end)
+        squeaks_2_bit_map = _to_bit_map(squeaks_2, freq_start, freq_end, t_start, t_end)
     else:
         raise ValueError("axis must be 0, 1 or None")
 
@@ -382,9 +357,10 @@ def coverage(squeaks_1: List[data_util.SqueakBox],
     return cov_1, cov_2
 
 
-def iou_dict_to_plain_list(iou_dict: Dict[data_util.SqueakBox,
-                                          Dict[data_util.SqueakBox, float]],
-                           mode: str = 'max') -> List[int]:
+def iou_dict_to_plain_list(
+    iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
+    mode: str = "max",
+) -> List[int]:
     """Transform elementwise iou dict to aggregating list.
 
     Parameters
@@ -406,16 +382,16 @@ def iou_dict_to_plain_list(iou_dict: Dict[data_util.SqueakBox,
     ValueError
         If `mode` is different max or sum.
     """
-    if mode != 'max' and mode != 'sum':
+    if mode != "max" and mode != "sum":
         raise ValueError("Mode must be 'sum' or 'max'")
 
     result = []
-    if mode == 'max':
+    if mode == "max":
         for (squeak, intersections) in iou_dict.items():
             if len(intersections.values()) > 0:
                 result.append(max(intersections.values()))
             else:
-                result.append(0.)
+                result.append(0.0)
     else:
         # todo: if still slow, change call to intersection_over_union_global
         for (squeak, intersections) in iou_dict.items():
@@ -424,14 +400,15 @@ def iou_dict_to_plain_list(iou_dict: Dict[data_util.SqueakBox,
                     intersection_over_union_global([squeak],
                                                    list(intersections.keys())))
             else:
-                result.append(0.)
+                result.append(0.0)
 
     return result
 
 
-def iou_dict_to_label_lists(iou_dict: Dict[data_util.SqueakBox,
-                                           Dict[data_util.SqueakBox, float]],
-                            mode: str = 'max') -> Dict[str, List[int]]:
+def iou_dict_to_label_lists(
+    iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
+    mode: str = "max",
+) -> Dict[str, List[int]]:
     """Transform elementwise iou dict to aggregating lists grouped by label.
 
     Parameters
@@ -453,11 +430,11 @@ def iou_dict_to_label_lists(iou_dict: Dict[data_util.SqueakBox,
     ValueError
         If `mode` is different max or sum.
     """
-    if mode != 'max' and mode != 'sum':
+    if mode != "max" and mode != "sum":
         raise ValueError("Mode must be 'sum' or 'max'")
 
     result = {}
-    if mode == 'max':
+    if mode == "max":
         for (squeak, intersections) in iou_dict.items():
             if squeak.label not in result:
                 result[squeak.label] = []
@@ -465,7 +442,7 @@ def iou_dict_to_label_lists(iou_dict: Dict[data_util.SqueakBox,
             if len(intersections.values()) > 0:
                 result[squeak.label].append(max(intersections.values()))
             else:
-                result[squeak.label].append(0.)
+                result[squeak.label].append(0.0)
     else:
         # todo: if still slow, change call to intersection_over_union_global
         for (squeak, intersections) in iou_dict.items():
@@ -477,15 +454,16 @@ def iou_dict_to_label_lists(iou_dict: Dict[data_util.SqueakBox,
                     intersection_over_union_global([squeak],
                                                    list(intersections.keys())))
             else:
-                result[squeak.label].append(0.)
+                result[squeak.label].append(0.0)
 
     return result
 
 
-def _count_hits(iou_dict: Dict[data_util.SqueakBox,
-                               Dict[data_util.SqueakBox, float]],
-                threshold: int = 0.5,
-                mode: str = 'max') -> int:
+def _count_hits(
+    iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
+    threshold: int = 0.5,
+    mode: str = "max",
+) -> int:
     """Count valid detections.
 
     Parameters
@@ -511,32 +489,32 @@ def _count_hits(iou_dict: Dict[data_util.SqueakBox,
     ValueError
         If `mode` is different max or sum.
     """
-    if mode != 'max' and mode != 'sum':
+    if mode != "max" and mode != "sum":
         raise ValueError("Mode must be 'sum' or 'max'")
 
     result = 0
-    if mode == 'max':
+    if mode == "max":
         for (squeak, intersections) in iou_dict.items():
 
-            if len(intersections.values()) > 0 and max(
-                    intersections.values()) >= threshold:
+            if (len(intersections.values()) > 0 and
+                    max(intersections.values()) >= threshold):
                 result += 1
     else:
         # todo: if still slow, change call to intersection_over_union_global
         for (squeak, intersections) in iou_dict.items():
 
-            if (len(intersections.values()) > 0 and
-                    intersection_over_union_global(
-                        [squeak], list(intersections.keys())) >= threshold):
+            if (len(intersections.values()) > 0 and intersection_over_union_global(
+                [squeak], list(intersections.keys())) >= threshold):
                 result += 1
 
     return result
 
 
-def _count_hits_per_label(iou_dict: Dict[data_util.SqueakBox,
-                                         Dict[data_util.SqueakBox, float]],
-                          threshold: int = 0.5,
-                          mode: str = 'max') -> Dict[str, int]:
+def _count_hits_per_label(
+    iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
+    threshold: int = 0.5,
+    mode: str = "max",
+) -> Dict[str, int]:
     """Count valid detections and group them by squeak label.
 
     Parameters
@@ -563,18 +541,18 @@ def _count_hits_per_label(iou_dict: Dict[data_util.SqueakBox,
     ValueError
         If `mode` is different max or sum.
     """
-    if mode != 'max' and mode != 'sum':
+    if mode != "max" and mode != "sum":
         raise ValueError("Mode must be 'sum' or 'max'")
 
     result = {}
-    if mode == 'max':
+    if mode == "max":
         for (squeak, intersections) in iou_dict.items():
 
             if squeak.label not in result:
                 result[squeak.label] = 0
 
-            if len(intersections.values()) > 0 and max(
-                    intersections.values()) >= threshold:
+            if (len(intersections.values()) > 0 and
+                    max(intersections.values()) >= threshold):
                 result[squeak.label] += 1
     else:
         # todo: if still slow, change call to intersection_over_union_global
@@ -583,25 +561,25 @@ def _count_hits_per_label(iou_dict: Dict[data_util.SqueakBox,
             if squeak.label not in result:
                 result[squeak.label] = 0
 
-            if (len(intersections.values()) > 0 and
-                    intersection_over_union_global(
-                        [squeak], list(intersections.keys())) >= threshold):
+            if (len(intersections.values()) > 0 and intersection_over_union_global(
+                [squeak], list(intersections.keys())) >= threshold):
                 result[squeak.label] += 1
 
     return result
 
 
 def detection_precision(
-        ground_truth: Union[List[data_util.SqueakBox], None] = None,
-        prediction: Union[List[data_util.SqueakBox], None] = None,
-        pred_given_truth_iou_dict: Union[Dict[data_util.SqueakBox,
-                                              Dict[data_util.SqueakBox, float]],
-                                         None] = None,
-        truth_given_pred_iou_dict: Union[Dict[data_util.SqueakBox,
-                                              Dict[data_util.SqueakBox, float]],
-                                         None] = None,
-        threshold: float = 0.5,
-        mode: str = 'max') -> float:
+    ground_truth: Union[List[data_util.SqueakBox], None] = None,
+    prediction: Union[List[data_util.SqueakBox], None] = None,
+    pred_given_truth_iou_dict: Union[Dict[data_util.SqueakBox,
+                                          Dict[data_util.SqueakBox, float]],
+                                     None] = None,
+    truth_given_pred_iou_dict: Union[Dict[data_util.SqueakBox,
+                                          Dict[data_util.SqueakBox, float]],
+                                     None] = None,
+    threshold: float = 0.5,
+    mode: str = "max",
+) -> float:
     """Compute overall detection precision.
 
     Parameters
@@ -644,13 +622,12 @@ def detection_precision(
         If (`prediction` or `ground_truth) and (`pred_given_truth_iou_dict`
         or `truth_given_pred_iou_dict`) are not specified.
     """
-    if ((prediction is None or ground_truth is None) and
-        (pred_given_truth_iou_dict is None or
-         truth_given_pred_iou_dict is None)):
-        raise ValueError(
-            ("prediction and ground_truth "
-             "or pred_given_truth_iou_dict and truth_given_pred_iou_dict "
-             "must be defined"))
+    if (prediction is None or
+            ground_truth is None) and (pred_given_truth_iou_dict is None or
+                                       truth_given_pred_iou_dict is None):
+        raise ValueError(("prediction and ground_truth "
+                          "or pred_given_truth_iou_dict and truth_given_pred_iou_dict "
+                          "must be defined"))
 
     if pred_given_truth_iou_dict is None or truth_given_pred_iou_dict is None:
         pred_given_truth_iou_dict = intersection_over_union_elementwise(
@@ -663,21 +640,21 @@ def detection_precision(
         truth_given_pred_iou_dict, threshold=threshold, mode=mode)
 
     if fp + tp == 0:
-        warnings.warn("no positives present for precision computation",
-                      RuntimeWarning)
+        warnings.warn("no positives present for precision computation", RuntimeWarning)
         return 0
 
     return tp / (fp + tp)
 
 
-def detection_recall(ground_truth: Union[List[data_util.SqueakBox],
-                                         None] = None,
-                     prediction: Union[List[data_util.SqueakBox], None] = None,
-                     pred_given_truth_iou_dict: Union[Dict[
-                         data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
-                                                      None] = None,
-                     threshold: float = 0.5,
-                     mode: str = 'max') -> Tuple[float, Dict[str, float]]:
+def detection_recall(
+    ground_truth: Union[List[data_util.SqueakBox], None] = None,
+    prediction: Union[List[data_util.SqueakBox], None] = None,
+    pred_given_truth_iou_dict: Union[Dict[data_util.SqueakBox,
+                                          Dict[data_util.SqueakBox, float]],
+                                     None] = None,
+    threshold: float = 0.5,
+    mode: str = "max",
+) -> Tuple[float, Dict[str, float]]:
     """Compute overall detection recall and label recalls.
 
     Parameters
@@ -714,8 +691,8 @@ def detection_recall(ground_truth: Union[List[data_util.SqueakBox],
         If (`prediction` or `ground_truth) and `pred_given_truth_iou_dict`
         are not specified.
     """
-    if ((prediction is None or ground_truth is None) and
-            pred_given_truth_iou_dict is None):
+    if (prediction is None or
+            ground_truth is None) and pred_given_truth_iou_dict is None:
         raise ValueError(("prediction and ground_truth "
                           "or pred_given_truth_iou_dict must be defined"))
 
@@ -724,13 +701,10 @@ def detection_recall(ground_truth: Union[List[data_util.SqueakBox],
             target=ground_truth, cover=prediction)
 
     if len(pred_given_truth_iou_dict) == 0:
-        warnings.warn("no true detections for recall computation",
-                      RuntimeWarning)
+        warnings.warn("no true detections for recall computation", RuntimeWarning)
         overall_recall = 0
     else:
-        tp = _count_hits(pred_given_truth_iou_dict,
-                         threshold=threshold,
-                         mode=mode)
+        tp = _count_hits(pred_given_truth_iou_dict, threshold=threshold, mode=mode)
         overall_recall = tp / len(pred_given_truth_iou_dict)
 
     labels_tp = _count_hits_per_label(pred_given_truth_iou_dict,

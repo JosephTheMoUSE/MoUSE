@@ -69,8 +69,10 @@ def test_merging():
                                       freqs=np.linspace(0, 10000, 10),
                                       times=np.linspace(0, 60, 60))
 
-    merged = data_util.merge_boxes(spec=spec,
-                                   squeaks=merging_boxes + not_merging_boxes,
-                                   delta_time=1.,
-                                   delta_freq=2000)
+    merged = data_util.merge_boxes(
+        spec=spec,
+        squeaks=merging_boxes + not_merging_boxes,
+        delta_time=1.0,
+        delta_freq=2000,
+    )
     assert set(merged) == merged_boxes

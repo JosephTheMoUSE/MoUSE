@@ -14,7 +14,7 @@ from mouse.utils import sound_util
 
 # Storage classes
 
-DataFolder = namedtuple('DataFolder', ['wavs', 'df', 'folder_path', 'signals'])
+DataFolder = namedtuple("DataFolder", ["wavs", "df", "folder_path", "signals"])
 
 
 @dataclass
@@ -29,26 +29,20 @@ class SqueakBox:
 
     def __hash__(self):
         """Calculate hash."""
-        return hash((self.freq_start,
-                     self.freq_end,
-                     self.t_start,
-                     self.t_end,
-                     self.label))
+        return hash(
+            (self.freq_start, self.freq_end, self.t_start, self.t_end, self.label))
 
     def __iter__(self):
         """Create iterator."""
-        return iter((self.freq_start,
-                     self.freq_end,
-                     self.t_start,
-                     self.t_end,
-                     self.label))
+        return iter(
+            (self.freq_start, self.freq_end, self.t_start, self.t_end, self.label))
 
 
 # data loading utilities
 
 
-def load_data_paths(folder: pathlib.Path) -> \
-        Tuple[List[pathlib.Path], List[pathlib.Path]]:
+def load_data_paths(
+    folder: pathlib.Path,) -> Tuple[List[pathlib.Path], List[pathlib.Path]]:
     """Load paths to data-files from `folder`.
 
     Parameters
@@ -68,9 +62,9 @@ def load_data_paths(folder: pathlib.Path) -> \
 
     for file in folder.iterdir():
         if file.is_file():
-            if file.name.endswith('wav'):
+            if file.name.endswith("wav"):
                 wav.append(file)
-            elif file.name.endswith('txt'):
+            elif file.name.endswith("txt"):
                 txt.append(file)
 
     return sorted(wav), sorted(txt)
@@ -83,17 +77,16 @@ def load_table(csv_path: pathlib.Path) -> pd.DataFrame:
     ----------
     csv_path : `pathlib.Path`
     """
-    df = pd.read_csv(csv_path, delimiter='\t')
-    df.rename(columns={'NOTE': const.COL_USV_TYPE}, inplace=True)
-    df.rename(columns=lambda x: x.replace(' ', '_')
-              if isinstance(x, str) else x,
+    df = pd.read_csv(csv_path, delimiter="\t")
+    df.rename(columns={"NOTE": const.COL_USV_TYPE}, inplace=True)
+    df.rename(columns=lambda x: x.replace(" ", "_") if isinstance(x, str) else x,
               inplace=True)
 
     def map_usv_type(val):
         """Make names of USVs uniform."""
         result = str(val).lower()
-        if result == '22-khz call':
-            result = '22-khz'
+        if result == "22-khz call":
+            result = "22-khz"
         return result
 
     df[const.COL_USV_TYPE] = df[const.COL_USV_TYPE].map(map_usv_type)
@@ -130,10 +123,8 @@ def load_data(sources: List[pathlib.Path],
             # fix recordings' start/end times
             file_time_df = df[[const.COL_BEGIN_FILE, const.COL_BEGIN_TIME]]
             # recordings are ordered by the beginnings of their recorded USVs
-            order = file_time_df.groupby(by=const.COL_BEGIN_FILE) \
-                .agg(np.median) \
-                .sort_values(const.COL_BEGIN_TIME) \
-                .index
+            order = (file_time_df.groupby(by=const.COL_BEGIN_FILE).agg(
+                np.median).sort_values(const.COL_BEGIN_TIME).index)
 
             durations = {s.name: s.duration for s in signals}
             shift = durations[order[0]]
@@ -153,9 +144,11 @@ def load_data(sources: List[pathlib.Path],
     return data_folders
 
 
-def load_squeak_boxes(df: Union[DataFolder, pd.DataFrame],
-                      filename: Union[str, pathlib.Path],
-                      spec: sound_util.SpectrogramData) -> List[SqueakBox]:
+def load_squeak_boxes(
+    df: Union[DataFolder, pd.DataFrame],
+    filename: Union[str, pathlib.Path],
+    spec: sound_util.SpectrogramData,
+) -> List[SqueakBox]:
     """Calculate bounding boxes for each squeak based on `df`.
 
     Bounding boxes will consist of indices that bound the squeaks on the
@@ -213,34 +206,35 @@ def load_squeak_boxes(df: Union[DataFolder, pd.DataFrame],
 
     # frequency/time to index conversion
     shifted_low_freq = low_frequency[good_idx] - spec.freq_start
-    low_freq_idx = np.floor(shifted_low_freq / spec.freq_pixel_span). \
-        astype(np.int32)
+    low_freq_idx = np.floor(shifted_low_freq / spec.freq_pixel_span).astype(np.int32)
     shifted_high_freq = high_frequency[good_idx] - spec.freq_start
-    high_freq_idx = np.ceil(shifted_high_freq / spec.freq_pixel_span).\
-        astype(np.int32)
+    high_freq_idx = np.ceil(shifted_high_freq / spec.freq_pixel_span).astype(np.int32)
     shifted_begin_time = begin_time[good_idx] - spec.t_start
-    begin_time_idx = np.floor(shifted_begin_time / spec.time_pixel_span). \
-        astype(np.int32)
+    begin_time_idx = np.floor(shifted_begin_time / spec.time_pixel_span).astype(
+        np.int32)
     shifted_end_time = end_time[good_idx] - spec.t_start
-    end_time_idx = np.ceil(shifted_end_time / spec.time_pixel_span). \
-        astype(np.int32)
+    end_time_idx = np.ceil(shifted_end_time / spec.time_pixel_span).astype(np.int32)
 
     return [
-        SqueakBox(freq_start=low_freq_idx[i],
-                  freq_end=high_freq_idx[i],
-                  t_start=begin_time_idx[i],
-                  t_end=end_time_idx[i],
-                  label=labels.iloc[i]) for i in range(len(low_freq_idx))
+        SqueakBox(
+            freq_start=low_freq_idx[i],
+            freq_end=high_freq_idx[i],
+            t_start=begin_time_idx[i],
+            t_end=end_time_idx[i],
+            label=labels.iloc[i],
+        ) for i in range(len(low_freq_idx))
     ]
 
 
 # processing utilities
 
 
-def filter_boxes(spec: sound_util.SpectrogramData,
-                 boxes: List[SqueakBox],
-                 min_time_span: float = 0.002,
-                 min_freq_span: int = 2000) -> List[SqueakBox]:
+def filter_boxes(
+    spec: sound_util.SpectrogramData,
+    boxes: List[SqueakBox],
+    min_time_span: float = 0.002,
+    min_freq_span: int = 2000,
+) -> List[SqueakBox]:
     """Filter boxes by their width and length.
 
     If a box is too short or to narrow it will be removed.
@@ -296,13 +290,14 @@ def get_abs_distances(first: SqueakBox, second: SqueakBox) -> Tuple[int, int]:
     return (t_distance, freq_distance)
 
 
-def merge_boxes(spec: sound_util.SpectrogramData,
-                squeaks: List[SqueakBox],
-                delta_freq: float,
-                delta_time: float,
-                label: Optional[Union[int, str]] = None,
-                scores: Optional[Union[np.ndarray, List]] = None)\
-        -> Union[List[SqueakBox], Tuple[List[SqueakBox], List[float]]]:
+def merge_boxes(
+    spec: sound_util.SpectrogramData,
+    squeaks: List[SqueakBox],
+    delta_freq: float,
+    delta_time: float,
+    label: Optional[Union[int, str]] = None,
+    scores: Optional[Union[np.ndarray, List]] = None,
+) -> Union[List[SqueakBox], Tuple[List[SqueakBox], List[float]]]:
     """Merge boxes that are sufficiently close.
 
     Parameters
@@ -336,13 +331,15 @@ def merge_boxes(spec: sound_util.SpectrogramData,
 
     index = Index()
     for idx, squeak in enumerate(squeaks):
-        index.insert(id=idx,
-                     coordinates=[
-                         squeak.t_start - delta_time_pixels,
-                         squeak.freq_start - delta_freq_pixels,
-                         squeak.t_end + delta_time_pixels,
-                         squeak.freq_end + delta_freq_pixels
-                     ])
+        index.insert(
+            id=idx,
+            coordinates=[
+                squeak.t_start - delta_time_pixels,
+                squeak.freq_start - delta_freq_pixels,
+                squeak.t_end + delta_time_pixels,
+                squeak.freq_end + delta_freq_pixels,
+            ],
+        )
     parents = [i for i in range(len(squeaks))]
 
     # we couldn't find real example that overflows recurrence stack
@@ -380,11 +377,13 @@ def merge_boxes(spec: sound_util.SpectrogramData,
     for key, squeaks in aggregated_squeaks.items():
         freq_starts, freq_ends, time_starts, time_ends, _ = list(zip(*squeaks))
         merged_squeaks.append(
-            SqueakBox(freq_start=min(freq_starts),
-                      freq_end=max(freq_ends),
-                      t_start=min(time_starts),
-                      t_end=max(time_ends),
-                      label=label))
+            SqueakBox(
+                freq_start=min(freq_starts),
+                freq_end=max(freq_ends),
+                t_start=min(time_starts),
+                t_end=max(time_ends),
+                label=label,
+            ))
         if scores is not None:
             s = aggregated_scores[key]
             merged_scores.append(sum(s) / len(s))
@@ -392,12 +391,14 @@ def merge_boxes(spec: sound_util.SpectrogramData,
     return merged_squeaks if scores is None else (merged_squeaks, scores)
 
 
-def clip_boxes(spec: sound_util.SpectrogramData,
-               boxes: List[SqueakBox],
-               t_start: Optional[float] = None,
-               t_end: Optional[float] = None,
-               freq_start: Optional[float] = None,
-               freq_end: Optional[float] = None) -> List[SqueakBox]:
+def clip_boxes(
+    spec: sound_util.SpectrogramData,
+    boxes: List[SqueakBox],
+    t_start: Optional[float] = None,
+    t_end: Optional[float] = None,
+    freq_start: Optional[float] = None,
+    freq_end: Optional[float] = None,
+) -> List[SqueakBox]:
     """Adjust `boxes` for clipped spectrogram.
 
     Returned boxes correctly index squeaks on a spectrogram calculated with
@@ -418,17 +419,18 @@ def clip_boxes(spec: sound_util.SpectrogramData,
     freq_pixel_start = spec.freq_to_pixels(freq_start - spec.freq_start)
     freq_pixel_end = spec.freq_to_pixels(freq_end - spec.freq_start)
     filtered_boxes = filter(
-        lambda box:
-        (box.t_end > t_pixel_start and box.t_start < t_pixel_end and box.
-         freq_start < freq_pixel_end and box.freq_end > freq_pixel_start),
-        boxes)
+        lambda box: (box.t_end > t_pixel_start and box.t_start < t_pixel_end and box.
+                     freq_start < freq_pixel_end and box.freq_end > freq_pixel_start),
+        boxes,
+    )
     return [
-        SqueakBox(t_start=max(box.t_start, t_pixel_start) - t_pixel_start,
-                  t_end=min(box.t_end, t_pixel_end) - t_pixel_start,
-                  freq_start=max(box.freq_start, freq_pixel_start) -
-                  freq_pixel_start,
-                  freq_end=min(box.freq_end, freq_pixel_end) - freq_pixel_start,
-                  label=box.label) for box in filtered_boxes
+        SqueakBox(
+            t_start=max(box.t_start, t_pixel_start) - t_pixel_start,
+            t_end=min(box.t_end, t_pixel_end) - t_pixel_start,
+            freq_start=max(box.freq_start, freq_pixel_start) - freq_pixel_start,
+            freq_end=min(box.freq_end, freq_pixel_end) - freq_pixel_start,
+            label=box.label,
+        ) for box in filtered_boxes
     ]
 
 
@@ -438,7 +440,7 @@ def clip_spec_and_boxes(
     t_start: Optional[float] = None,
     t_end: Optional[float] = None,
     freq_start: Optional[float] = None,
-    freq_end: Optional[float] = None
+    freq_end: Optional[float] = None,
 ) -> [sound_util.SpectrogramData, List[SqueakBox]]:
     """Clip spectrogram and boxes according to specified values."""
     if len(boxes) > 0 and isinstance(boxes[0], list):
@@ -455,12 +457,14 @@ def clip_spec_and_boxes(
                                                t_end=t_end)
     result_boxes = []
     for unclipped_boxes in _boxes:
-        clipped_boxes = clip_boxes(spec=spec,
-                                   boxes=unclipped_boxes,
-                                   t_start=clipped_spec.t_start,
-                                   t_end=clipped_spec.t_end,
-                                   freq_start=clipped_spec.freq_start,
-                                   freq_end=clipped_spec.freq_end)
+        clipped_boxes = clip_boxes(
+            spec=spec,
+            boxes=unclipped_boxes,
+            t_start=clipped_spec.t_start,
+            t_end=clipped_spec.t_end,
+            freq_start=clipped_spec.freq_start,
+            freq_end=clipped_spec.freq_end,
+        )
         result_boxes.append(clipped_boxes)
     if result_nested:
         return clipped_spec, result_boxes
@@ -468,8 +472,7 @@ def clip_spec_and_boxes(
         return clipped_spec, result_boxes[0]
 
 
-def find_bounding_boxes(mask: np.array,
-                        min_side_length: int = 1) -> List[SqueakBox]:
+def find_bounding_boxes(mask: np.array, min_side_length: int = 1) -> List[SqueakBox]:
     """Find bounding boxes that bound interesting areas on mask.
 
     Parameters
@@ -484,14 +487,12 @@ def find_bounding_boxes(mask: np.array,
     -------
     List[SqueakBox]
     """
-    label_mask, region_count = measure.label(mask,
-                                             background=0,
-                                             connectivity=1,
-                                             return_num=True)
+    label_mask, region_count = measure.label(
+        mask, background=0, connectivity=1, return_num=True
+    )
     result = []
     regions = defaultdict(list)
-    with np.nditer(label_mask, flags=['multi_index'],
-                   op_flags=['readonly']) as it:
+    with np.nditer(label_mask, flags=["multi_index"], op_flags=["readonly"]) as it:
         for label in it:
             if label != -1:
                 regions[label.item()].append(it.multi_index)
@@ -502,9 +503,11 @@ def find_bounding_boxes(mask: np.array,
         upper_right = np.max(region_idx, axis=0)
         if np.all((upper_right - lower_left + 1) >= min_side_length):
             result.append(
-                SqueakBox(freq_start=lower_left[0],
-                          freq_end=upper_right[0],
-                          t_start=lower_left[1],
-                          t_end=upper_right[1],
-                          label=None))
+                SqueakBox(
+                    freq_start=lower_left[0],
+                    freq_end=upper_right[0],
+                    t_start=lower_left[1],
+                    t_end=upper_right[1],
+                    label=None,
+                ))
     return result
