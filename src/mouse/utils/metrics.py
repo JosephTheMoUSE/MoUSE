@@ -213,7 +213,6 @@ def intersection_over_union_elementwise(
             cover_squeak = cover_sorted[j]
             if cover_squeak.t_start > target_squeak.t_end:
                 break
-            print(target_squeak, cover_squeak)
             iou = _box_iou(target_squeak, cover_squeak)
 
             if iou > 0:
