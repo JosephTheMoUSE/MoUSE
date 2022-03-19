@@ -1,3 +1,4 @@
+"""Module implementing NN utilities."""
 import math
 from typing import Tuple, List, Dict, Optional, Union
 
@@ -158,7 +159,7 @@ class Normalize(nn.Module):
         self.image_mean = image_mean
         self.image_std = image_std
 
-    def forward(self, images, targets=None):
+    def forward(self, images, targets=None): # noqa D104
         images = [img for img in images]
         if targets is not None:
             # make a copy of targets to avoid modifying it in-place
@@ -225,6 +226,7 @@ class Normalize(nn.Module):
         return batched_imgs
 
     def postprocess(self, result, image_shapes, original_image_sizes):
+        """Resize predicted boxes to a size that fits the original image."""
         if self.training:
             return result
         for i, (pred, im_s,

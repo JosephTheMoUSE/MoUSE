@@ -1,3 +1,4 @@
+"""Module implementing NN-based USVs search."""
 import os
 from argparse import Namespace
 from pathlib import Path

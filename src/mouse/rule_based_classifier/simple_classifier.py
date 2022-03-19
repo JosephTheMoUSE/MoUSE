@@ -1,3 +1,4 @@
+"""Module implementing USV classification."""
 from typing import Union, List, Optional, Callable
 from mouse.utils.data_util import SqueakBox
 from mouse.utils.sound_util import SpectrogramData

@@ -1,5 +1,4 @@
-"""Module containing mainly paths to data folders.
-   Used for method development."""
+"""Module containing mainly paths to data folders. Used for method development."""
 
 from pathlib import Path
 

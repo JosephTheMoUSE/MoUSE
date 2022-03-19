@@ -45,7 +45,6 @@ def draw_spectrogram(spec: sound_util.SpectrogramData,
         Object returned by plt.pcolormesh, used for optimizing computations,
         by reusing same mesh with different data
     """
-
     if colormesh is None:
         colormesh = ax.pcolormesh(spec.spec, cmap=cmap, **kwargs)
         ax_colorbar = ax.inset_axes([1.01, 0.05, 0.02, 0.95])
