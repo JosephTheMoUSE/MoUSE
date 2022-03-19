@@ -11,10 +11,12 @@ from mouse.utils import sound_util
 
 
 # Bilateral filter.
-def bilateral_filter(spectrogram: sound_util.SpectrogramData,
-                     d: int,
-                     sigma_color: float,
-                     sigma_space: float):
+def bilateral_filter(
+    spectrogram: sound_util.SpectrogramData,
+    d: int,
+    sigma_color: float,
+    sigma_space: float,
+):
     """Perform in-place bilateral filtering on the given spectrogram.
 
     Parameters
@@ -29,10 +31,12 @@ def bilateral_filter(spectrogram: sound_util.SpectrogramData,
         A parameter passed to cv2.bilateralFilter.
     """
     spectrogram.spec = torch.tensor(
-        cv2.bilateralFilter(src=spectrogram.spec.numpy(),
-                            d=d,
-                            sigmaColor=sigma_color,
-                            sigmaSpace=sigma_space))
+        cv2.bilateralFilter(
+            src=spectrogram.spec.numpy(),
+            d=d,
+            sigmaColor=sigma_color,
+            sigmaSpace=sigma_space,
+        ))
 
 
 # Short-duration transient suppression filter.
@@ -43,12 +47,8 @@ def _gaussian_filter(image, sigma_x, sigma_y, m):
     # Standard Gaussian filer is separable - we can compute it based on
     # two 1d Gaussian kernels instead of one 2d Gaussian kernel
     # which results in better complexity.
-    gaussian_kernel_x = _gaussian_kernel1d(sigma=sigma_x,
-                                           order=0,
-                                           radius=(m - 1) / 2)
-    gaussian_kernel_y = _gaussian_kernel1d(sigma=sigma_y,
-                                           order=0,
-                                           radius=(m - 1) / 2)
+    gaussian_kernel_x = _gaussian_kernel1d(sigma=sigma_x, order=0, radius=(m - 1) / 2)
+    gaussian_kernel_y = _gaussian_kernel1d(sigma=sigma_y, order=0, radius=(m - 1) / 2)
     result = correlate1d(input=image, weights=gaussian_kernel_x, axis=1)
     correlate1d(input=result, weights=gaussian_kernel_y, axis=0, output=result)
     return result
@@ -62,18 +62,18 @@ def _diagonal_gaussian_filter(image, sigma_x, sigma_y, m):
     # Paper suggests to have ony positive numbers for p and q but it doesn't
     # produce a diagonal kernel so both positive and negative are considered.
     diagonal_kernel = np.array([[
-        np.exp(-(np.power((q - p) / sigma_x, 2) +
-                 np.power((q + p) / sigma_y, 2))) for p in r
-    ] for q in r])
+        np.exp(-(np.power((q - p) / sigma_x, 2) + np.power((q + p) / sigma_y, 2)))
+        for p in r
+    ]
+                                for q in r])
     diagonal_kernel = diagonal_kernel / np.sum(diagonal_kernel)
     return correlate(image, diagonal_kernel)
 
 
-def short_duration_transient_suppression_filter(
-        spectrogram: sound_util.SpectrogramData,
-        alpha: float,
-        m: int = 3,
-        a: float = None):
+def short_duration_transient_suppression_filter(spectrogram: sound_util.SpectrogramData,
+                                                alpha: float,
+                                                m: int = 3,
+                                                a: float = None):
     """Perform in-place SDTS filtering on the given spectrogram.
 
     Based on:
@@ -122,21 +122,24 @@ def short_duration_transient_suppression_filter(
 
     maximum = np.maximum(
         np.maximum(horizontal_intermediate, diagonal_intermediate_1),
-        diagonal_intermediate_2)
-    spectrogram.spec = alpha * spectrogram.spec + (1 - alpha) * (
-        maximum - vertical_intermediate)
+        diagonal_intermediate_2,
+    )
+    spectrogram.spec = alpha * spectrogram.spec + (1 - alpha) * (maximum -
+                                                                 vertical_intermediate)
 
 
 # Noise gate denoising
-def noise_gate_filter(spectrogram: sound_util.SpectrogramData,
-                      noise_spectrogram: sound_util.SpectrogramData,
-                      n_grad_freq: int,
-                      n_grad_time: int,
-                      n_std_thresh: float,
-                      noise_decrease: float,
-                      ref: float = 1.0,
-                      amin: float = 1e-20,
-                      top_db: float = 80.0):
+def noise_gate_filter(
+    spectrogram: sound_util.SpectrogramData,
+    noise_spectrogram: sound_util.SpectrogramData,
+    n_grad_freq: int,
+    n_grad_time: int,
+    n_std_thresh: float,
+    noise_decrease: float,
+    ref: float = 1.0,
+    amin: float = 1e-20,
+    top_db: float = 80.0,
+):
     """Perform in-place noise gate filtering on the given spectrogram.
 
     The algorithm computes mean noise level for each frequency based on

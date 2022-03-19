@@ -1,14 +1,17 @@
+"""Module implementing USV classification."""
 from typing import Union, List, Optional, Callable
 from mouse.utils.data_util import SqueakBox
 from mouse.utils.sound_util import SpectrogramData
 
 
-def classify_USVs(spec: SpectrogramData,
-                  squeak_boxes: List[SqueakBox],
-                  threshold: Union[int, float],
-                  low_label: str = 'low freq',
-                  high_label: str = 'high freq',
-                  callback: Optional[Callable] = None):
+def classify_USVs(
+    spec: SpectrogramData,
+    squeak_boxes: List[SqueakBox],
+    threshold: Union[int, float],
+    low_label: str = "low freq",
+    high_label: str = "high freq",
+    callback: Optional[Callable] = None,
+):
     """Run simple classification of `squeak_boxes`.
 
     Parameters

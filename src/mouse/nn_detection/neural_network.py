@@ -1,3 +1,4 @@
+"""Module implementing NN-based USVs search."""
 import os
 from argparse import Namespace
 from pathlib import Path
@@ -9,9 +10,11 @@ import pytorch_lightning as pl
 import torch
 from torch import Tensor
 from torch.utils.data import DataLoader
-from torchvision.models.detection.faster_rcnn import (FastRCNNPredictor,
-                                                      FasterRCNN,
-                                                      TwoMLPHead)
+from torchvision.models.detection.faster_rcnn import (
+    FastRCNNPredictor,
+    FasterRCNN,
+    TwoMLPHead,
+)
 from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import MultiScaleRoIAlign
 from tqdm import tqdm
@@ -21,22 +24,23 @@ from mouse.utils.sound_util import SpectrogramData
 from .modeling_utils import get_backbone, Normalize
 
 PRETRAINED_MODELS_CHECKPOINTS = {
-    'f-rcnn-custom': {
-        'url':
-            'https://drive.google.com/uc?id=15MM-Qq_KeDLET20aLmrika4qakLTyXOB',  # noqa
-        'filename':
-            'test_rcnn.ckpt'
+    "f-rcnn-custom": {
+        "url":
+            "https://drive.google.com/uc?id=15MM-Qq_KeDLET20aLmrika4qakLTyXOB",  # noqa
+        "filename": "test_rcnn.ckpt",
     }
 }
 
 
-def find_USVs(spec_data: SpectrogramData,
-              model_name: str,
-              cache_dir: Path,
-              batch_size: int,
-              confidence_threshold: float = -1,
-              silent: bool = False,
-              callback: Optional[Callable] = None):
+def find_USVs(
+    spec_data: SpectrogramData,
+    model_name: str,
+    cache_dir: Path,
+    batch_size: int,
+    confidence_threshold: float = -1,
+    silent: bool = False,
+    callback: Optional[Callable] = None,
+):
     """Load and produce predictions for spectrogram data.
 
     Parameters
@@ -62,24 +66,23 @@ def find_USVs(spec_data: SpectrogramData,
         List of predicted boxes.
     """
     if model_name not in PRETRAINED_MODELS_CHECKPOINTS:
-        raise ValueError(f'{model_name} is not a pretrained model name')
+        raise ValueError(f"{model_name} is not a pretrained model name")
 
-    model_path = \
-        cache_dir.joinpath(
-            PRETRAINED_MODELS_CHECKPOINTS[model_name]['filename'])
+    model_path = cache_dir.joinpath(
+        PRETRAINED_MODELS_CHECKPOINTS[model_name]["filename"])
     if not model_path.exists():
         os.makedirs(str(cache_dir), exist_ok=True)
-        gdown.download(PRETRAINED_MODELS_CHECKPOINTS[model_name]['url'],
+        gdown.download(PRETRAINED_MODELS_CHECKPOINTS[model_name]["url"],
                        output=str(model_path))
 
-    model = USVDetector.load_from_checkpoint(str(model_path),
-                                             inference_only=True)
+    model = USVDetector.load_from_checkpoint(str(model_path), inference_only=True)
     return model.predict_for_spectrogram_data(
         spec_data,
         batch_size=batch_size,
         confidence_threshold=confidence_threshold,
         silent=silent,
-        callback=callback)
+        callback=callback,
+    )
 
 
 def _preprocess_spec(spec, freqs, use_log, clip_18khz, gamma):
@@ -89,7 +92,7 @@ def _preprocess_spec(spec, freqs, use_log, clip_18khz, gamma):
         spec = np.log10(spec)
     elif use_log == 2:
         spec = np.log2(spec)
-    elif use_log == 'e':
+    elif use_log == "e":
         spec = np.log(spec)
     elif use_log is not False:
         # calculate log with arbitrary base
@@ -121,55 +124,62 @@ class USVDetector(pl.LightningModule):
     def __init__(self, args: Namespace, inference_only: bool = False):
         super().__init__()
         self.save_hyperparameters(args)
-        backbone = get_backbone(model_name=self.hparams.backbone,
-                                path=self.hparams.backbone_pretrained_path,
-                                inference_only=inference_only)
+        backbone = get_backbone(
+            model_name=self.hparams.backbone,
+            path=self.hparams.backbone_pretrained_path,
+            inference_only=inference_only,
+        )
 
         self.model = self._construct_model(backbone)
 
     def _construct_model(self, backbone):
-        if self.hparams.model_type == 'rcnn':
+        if self.hparams.model_type == "rcnn":
             anchor_generator = AnchorGenerator(
                 sizes=(self.hparams.sizes,),
-                aspect_ratios=(self.hparams.aspect_rations,))
+                aspect_ratios=(self.hparams.aspect_rations,),
+            )
             roi_pooler = MultiScaleRoIAlign(
-                featmap_names=['0'],
+                featmap_names=["0"],
                 output_size=self.hparams.roi_output_size,
-                sampling_ratio=self.hparams.sampling_ratio)
+                sampling_ratio=self.hparams.sampling_ratio,
+            )
 
             box_predictor = FastRCNNPredictor(self.hparams.representation_size,
                                               self.hparams.num_classes)
 
             resolution = roi_pooler.output_size[0]
-            box_head = TwoMLPHead(backbone.out_channels * resolution**2,
-                                  self.hparams.representation_size)
+            box_head = TwoMLPHead(
+                backbone.out_channels * resolution**2,
+                self.hparams.representation_size,
+            )
 
-            model = FasterRCNN(backbone,
-                               rpn_anchor_generator=anchor_generator,
-                               box_roi_pool=roi_pooler,
-                               box_head=box_head,
-                               box_predictor=box_predictor,
-                               image_mean=(0,),
-                               image_std=(1,),
-                               max_size=1000,
-                               min_size=220)
-            model.transform = \
-                Normalize(self.hparams.data_mean, self.hparams.data_std)
+            model = FasterRCNN(
+                backbone,
+                rpn_anchor_generator=anchor_generator,
+                box_roi_pool=roi_pooler,
+                box_head=box_head,
+                box_predictor=box_predictor,
+                image_mean=(0,),
+                image_std=(1,),
+                max_size=1000,
+                min_size=220,
+            )
+            model.transform = Normalize(self.hparams.data_mean, self.hparams.data_std)
         else:
-            raise ValueError(f'Unknown model type {self.hparams.model_type}')
+            raise ValueError(f"Unknown model type {self.hparams.model_type}")
 
         return model
 
-    def forward(self,
-                specs: Tensor) \
-            -> Union[Tensor, Dict[str, Tensor]]:
+    def forward(self, specs: Tensor) -> Union[Tensor, Dict[str, Tensor]]:
         """Modules forward method."""
         return self.model(specs)
 
-    def combine_and_filter_predictions(self,
-                                       all_preds: Iterable[Dict[str, Tensor]],
-                                       stride: int,
-                                       confidence_threshold: float):
+    def combine_and_filter_predictions(
+        self,
+        all_preds: Iterable[Dict[str, Tensor]],
+        stride: int,
+        confidence_threshold: float,
+    ):
         """Combine batched model predictions into one (undo batching).
 
         Parameters
@@ -198,12 +208,12 @@ class USVDetector(pl.LightningModule):
         offset = 0
         for chunk_id, pred in enumerate(all_preds):
             boxes, labels = (
-                pred['boxes'].detach().cpu().numpy().astype(np.int64),
-                pred['labels'].detach().cpu().numpy()
+                pred["boxes"].detach().cpu().numpy().astype(np.int64),
+                pred["labels"].detach().cpu().numpy(),
             )
 
-            if 'scores' in pred:
-                scores = pred['scores'].detach().cpu().numpy()
+            if "scores" in pred:
+                scores = pred["scores"].detach().cpu().numpy()
                 boxes = boxes[scores > confidence_threshold]
                 labels = labels[scores > confidence_threshold]
                 scores = scores[scores > confidence_threshold]
@@ -226,41 +236,46 @@ class USVDetector(pl.LightningModule):
 
         return all_boxes, all_labels, all_scores
 
-    def _merge_boxes_for_label(self,
-                               spec_data: SpectrogramData,
-                               squeaks: List[SqueakBox],
-                               delta_freq=0.0,
-                               delta_time=0.01,
-                               label_id=None,
-                               label=None):
+    def _merge_boxes_for_label(
+        self,
+        spec_data: SpectrogramData,
+        squeaks: List[SqueakBox],
+        delta_freq=0.0,
+        delta_time=0.01,
+        label_id=None,
+        label=None,
+    ):
         """Merge boxes for specific label."""
         return merge_boxes(
             spec_data,
             [squeak for squeak in squeaks if squeak.label == label_id],
             delta_freq=delta_freq,
             delta_time=delta_time,
-            label=label)
+            label=label,
+        )
 
-    def _merge_spec_predictions(self,
-                                spec_data: SpectrogramData,
-                                all_preds: List[Dict[str, Tensor]],
-                                stride: int,
-                                confidence_threshold: float,
-                                freq_offset: int):
-        all_boxes, all_labels, _ = \
-            self.combine_and_filter_predictions(
-                all_preds,
-                stride,
-                confidence_threshold)
+    def _merge_spec_predictions(
+        self,
+        spec_data: SpectrogramData,
+        all_preds: List[Dict[str, Tensor]],
+        stride: int,
+        confidence_threshold: float,
+        freq_offset: int,
+    ):
+        all_boxes, all_labels, _ = self.combine_and_filter_predictions(
+            all_preds, stride, confidence_threshold
+        )
 
         squeaks = [
-            SqueakBox(freq_start=freq_start,
-                      freq_end=freq_end,
-                      t_start=t_start,
-                      t_end=t_end,
-                      label=label)
-            for (t_start, freq_start, t_end, freq_end),  # noqa
-            label in zip(all_boxes, all_labels)
+            SqueakBox(
+                freq_start=freq_start,
+                freq_end=freq_end,
+                t_start=t_start,
+                t_end=t_end,
+                label=label,
+            ) for (t_start, freq_start, t_end, freq_end),
+            label in zip(  # noqa
+                all_boxes, all_labels)
         ]
 
         # only merge predictions for same label
@@ -272,26 +287,30 @@ class USVDetector(pl.LightningModule):
                 delta_freq=0.0,
                 delta_time=0.01,
                 label_id=label_id,
-                label=label)
+                label=label,
+            )
 
             predicted_label_boxes = [
-                SqueakBox(freq_start=box.freq_start + freq_offset,
-                          freq_end=box.freq_end + freq_offset,
-                          t_start=box.t_start,
-                          t_end=box.t_end,
-                          label=box.label) for box in predicted_label_boxes
+                SqueakBox(
+                    freq_start=box.freq_start + freq_offset,
+                    freq_end=box.freq_end + freq_offset,
+                    t_start=box.t_start,
+                    t_end=box.t_end,
+                    label=box.label,
+                ) for box in predicted_label_boxes
             ]
 
             predicted_boxes.extend(predicted_label_boxes)
         return predicted_boxes
 
-    def predict_for_spectrogram_data(self,
-                                     spec_data: SpectrogramData,
-                                     batch_size: Optional[int] = None,
-                                     confidence_threshold: float = -1,
-                                     silent: bool = False,
-                                     callback: Optional[Callable] = None) \
-            -> List[SqueakBox]:
+    def predict_for_spectrogram_data(
+        self,
+        spec_data: SpectrogramData,
+        batch_size: Optional[int] = None,
+        confidence_threshold: float = -1,
+        silent: bool = False,
+        callback: Optional[Callable] = None,
+    ) -> List[SqueakBox]:
         """Use to produce and process model predictions.
 
         Parameters
@@ -321,7 +340,7 @@ class USVDetector(pl.LightningModule):
             freqs,
             self.hparams.use_log,
             not self.hparams.no_clip_18khz,
-            self.hparams.gamma
+            self.hparams.gamma,
         )
 
         example_duration = self.hparams.example_duration
@@ -337,9 +356,9 @@ class USVDetector(pl.LightningModule):
             stride = example_duration - overlap
 
         chunks = [
-            torch.tensor(spec[:, chunk_start:chunk_start +
-                              example_duration]).unsqueeze(0) for chunk_start in
-            range(0, times.shape[0] - example_duration, stride)
+            torch.tensor(spec[:,
+                              chunk_start:chunk_start + example_duration]).unsqueeze(0)
+            for chunk_start in range(0, times.shape[0] - example_duration, stride)
         ]
 
         batch_size = batch_size if batch_size else self.hparams.eval_batch_size
@@ -360,5 +379,6 @@ class USVDetector(pl.LightningModule):
             stride,
             self.hparams.confidence_threshold
             if confidence_threshold == -1 else confidence_threshold,
-            freq_offset)
+            freq_offset,
+        )
         return pred_box

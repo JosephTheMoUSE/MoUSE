@@ -1,6 +1,7 @@
 """Module implementing GAC USVs search."""
 from functools import partial
 from typing import Callable, List, Optional
+import copy
 
 import numpy as np
 from skimage import segmentation
@@ -39,33 +40,34 @@ def find_USVs(spec: sound_util.SpectrogramData,
     List[data_util.SqueakBox]
         List of detected USVs' bounding boxes.
     """
+    _kwargs = copy.deepcopy(kwargs)
+
     if level_set_fn is None:
 
-        def level_set_fn(spectrogram: np.array):
+        def level_set_fn(spectrogram: np.ndarray):
             return np.ones(spectrogram.shape, dtype=np.int8)
 
     if preprocessing_fn is None:
         preprocessing_fn = partial(segmentation.inverse_gaussian_gradient,
                                    sigma=5,
                                    alpha=100)
-    for arg, val in [("iterations", 230),
-                     ("smoothing", 0),
-                     ("threshold", 0.9),
-                     ("balloon", -1)]:
-        if arg not in kwargs:
-            kwargs[arg] = val
+    for arg, val in [
+        ("iterations", 230),
+        ("smoothing", 0),
+        ("threshold", 0.9),
+        ("balloon", -1),
+    ]:
+        if arg not in _kwargs:
+            _kwargs[arg] = val
 
     _spec = preprocessing_fn(spec.spec.numpy())
 
     init_level_set = level_set_fn(_spec)
 
-    level_set = segmentation. \
-        morphological_geodesic_active_contour(_spec,
-                                              init_level_set=init_level_set,
-                                              **kwargs)
+    level_set = segmentation.morphological_geodesic_active_contour(
+        _spec, init_level_set=init_level_set, **_kwargs)
 
-    boxes = data_util.find_bounding_boxes(level_set,
-                                          min_side_length=min_side_length)
+    boxes = data_util.find_bounding_boxes(level_set, min_side_length=min_side_length)
 
     if filter:
         return data_util.filter_boxes(spec, boxes)
