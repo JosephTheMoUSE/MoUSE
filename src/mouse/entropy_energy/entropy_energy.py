@@ -1,4 +1,4 @@
-"""Module implementing entropy-energy USVs search."""
+"""(Deprecated) Module implementing entropy-energy USVs search."""
 from typing import List, Union
 
 import numpy as np
@@ -14,14 +14,14 @@ def _entropy(x):
 
 
 def _moving_average(x, w):
-    x = np.pad(x, (w // 2, (w - 1) // 2), 'constant', constant_values=(1,))
-    return np.convolve(x, np.ones(w), 'valid') / w
+    x = np.pad(x, (w // 2, (w - 1) // 2), "constant", constant_values=(1,))
+    return np.convolve(x, np.ones(w), "valid") / w
 
 
 def _moving_average_2d(x, w_height, w_width):
-    x = np.pad(x, ((w_height // 2, (w_height - 1) // 2), (0, 0)), 'mean')
+    x = np.pad(x, ((w_height // 2, (w_height - 1) // 2), (0, 0)), "mean")
     return signal.convolve2d(x, np.ones(
-        (w_height, w_width)), 'valid').flatten() / (w_height * w_width)
+        (w_height, w_width)), "valid").flatten() / (w_height * w_width)
 
 
 def _binary_mask_to_ranges(binary_mask):
@@ -58,19 +58,20 @@ def _mark_high_energy_rows(spectrogram, energy_window, energy_threshold):
         spectrogram = spectrogram.numpy()
     mean_energy = np.mean(np.power(spectrogram, 2))
     width = spectrogram.shape[1]
-    high_energy = _moving_average_2d(np.power(spectrogram, 2),
-                                     energy_window,
-                                     width) > energy_threshold * mean_energy
+    high_energy = (_moving_average_2d(np.power(spectrogram, 2), energy_window, width) >
+                   energy_threshold * mean_energy)
     return _binary_mask_to_ranges(high_energy)
 
 
-def _mark_low_entropy_high_energy(spectrogram,
-                                  freqs,
-                                  freq_cutoff,
-                                  entropy_window,
-                                  entropy_threshold,
-                                  energy_window,
-                                  energy_threshold):
+def _mark_low_entropy_high_energy(
+    spectrogram,
+    freqs,
+    freq_cutoff,
+    entropy_window,
+    entropy_threshold,
+    energy_window,
+    energy_threshold,
+):
     spectrogram_ = spectrogram[freqs > freq_cutoff, :]
     delta_freq = spectrogram.shape[0] - spectrogram_.shape[0]
     columns_to_check = _mark_low_entropy(spectrogram_,
@@ -78,17 +79,18 @@ def _mark_low_entropy_high_energy(spectrogram,
                                          entropy_threshold)
     squeak_boxes = []
     for cols in columns_to_check:
-        row_ranges = _mark_high_energy_rows(
-            spectrogram_[:, cols[0]:cols[1] + 1],
-            energy_window,
-            energy_threshold)
+        row_ranges = _mark_high_energy_rows(spectrogram_[:, cols[0]:cols[1] + 1],
+                                            energy_window,
+                                            energy_threshold)
         for rows in row_ranges:
             squeak_boxes.append(
-                data_util.SqueakBox(freq_start=rows[0] + delta_freq,
-                                    freq_end=rows[1] + delta_freq,
-                                    t_start=cols[0],
-                                    t_end=cols[1],
-                                    label=None))
+                data_util.SqueakBox(
+                    freq_start=rows[0] + delta_freq,
+                    freq_end=rows[1] + delta_freq,
+                    t_start=cols[0],
+                    t_end=cols[1],
+                    label=None,
+                ))
     return squeak_boxes
 
 
@@ -104,17 +106,18 @@ def _filter_by_ratio(squeaks, ratio_cutoff):
 
 
 def find_USVs(
-        spec: sound_util.SpectrogramData,
-        freq_cutoff: int = 22000,
-        entropy_window: int = 5,
-        entropy_threshold: float = 0.71,
-        energy_window: int = 18,
-        energy_threshold: float = 2.1,
-        filter: bool = False,
-        filter_ratio: Union[float, None] = None,
-        merge: bool = False,
-        merge_delta_freq: Union[int, None] = None,
-        merge_delta_time: Union[int, None] = None) -> List[data_util.SqueakBox]:
+    spec: sound_util.SpectrogramData,
+    freq_cutoff: int = 22000,
+    entropy_window: int = 5,
+    entropy_threshold: float = 0.71,
+    energy_window: int = 18,
+    energy_threshold: float = 2.1,
+    filter: bool = False,
+    filter_ratio: Union[float, None] = None,
+    merge: bool = False,
+    merge_delta_freq: Union[int, None] = None,
+    merge_delta_time: Union[int, None] = None,
+) -> List[data_util.SqueakBox]:
     """Find USVs on spectrogram `spec` using entropy-energy filtering.
 
     Parameters
@@ -167,24 +170,24 @@ def find_USVs(
         entropy_window=entropy_window,
         entropy_threshold=entropy_threshold,
         energy_window=energy_window,
-        energy_threshold=energy_threshold)
+        energy_threshold=energy_threshold,
+    )
 
     if merge:
         if merge_delta_time is None or merge_delta_freq is None:
-            raise ValueError(
-                "merge_delta_time and merge_delta_freq must be specified")
+            raise ValueError("merge_delta_time and merge_delta_freq must be specified")
         else:
             marked_boxes = data_util.merge_boxes(
                 spec=spec,
                 squeaks=marked_boxes,
                 delta_freq=merge_delta_freq * spec.get_freq_pixel_span(),
-                delta_time=merge_delta_time * spec.get_time_pixel_span())
+                delta_time=merge_delta_time * spec.get_time_pixel_span(),
+            )
 
     if filter:
         if filter_ratio is None:
             raise ValueError("filter_ratio must be specified")
         else:
-            marked_boxes = _filter_by_ratio(marked_boxes,
-                                            ratio_cutoff=filter_ratio)
+            marked_boxes = _filter_by_ratio(marked_boxes, ratio_cutoff=filter_ratio)
 
     return marked_boxes
