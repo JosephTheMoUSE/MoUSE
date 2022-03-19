@@ -44,7 +44,7 @@ def find_USVs(spec: sound_util.SpectrogramData,
 
     if level_set_fn is None:
 
-        def level_set_fn(spectrogram: np.array):
+        def level_set_fn(spectrogram: np.ndarray):
             return np.ones(spectrogram.shape, dtype=np.int8)
 
     if preprocessing_fn is None:

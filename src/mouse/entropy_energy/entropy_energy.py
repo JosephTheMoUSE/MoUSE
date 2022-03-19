@@ -1,4 +1,4 @@
-"""Module implementing entropy-energy USVs search."""
+"""(Deprecated) Module implementing entropy-energy USVs search."""
 from typing import List, Union
 
 import numpy as np

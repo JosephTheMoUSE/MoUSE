@@ -17,7 +17,7 @@ class BackboneBlock(nn.Module):
         Number of channels that come to this layer.
     out_channels : int
         Number of convolutional filters to use in this layer.
-    kernel_size : Tuple
+    kernel_size : Tuple[int]
         Size of convolutional filters.
     stride : Union[int, Tuple]
         Convolution stride.
@@ -33,7 +33,7 @@ class BackboneBlock(nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_size: Tuple,
+        kernel_size: Tuple[int],
         stride: Union[int, Tuple] = 1,
         padding: Union[int, Tuple, str] = 1,
         negative_slope: float = 0.01,
@@ -159,7 +159,7 @@ class Normalize(nn.Module):
         self.image_mean = image_mean
         self.image_std = image_std
 
-    def forward(self, images, targets=None): # noqa D104
+    def forward(self, images, targets=None):  # noqa D104
         images = [img for img in images]
         if targets is not None:
             # make a copy of targets to avoid modifying it in-place

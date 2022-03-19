@@ -14,21 +14,21 @@ import torchaudio.transforms as T
 class SpectrogramData:
     """A class used to manage spectrogram and it's metadata."""
 
-    def __init__(self, spec: torch.Tensor, times: np.array, freqs: np.array):
+    def __init__(self, spec: torch.Tensor, times: np.ndarray, freqs: np.ndarray):
         """Create SpectrogramData object.
 
         Parameters
         ----------
         spec : torch.Tensor
             The 2d spectrogram array.
-        times : np.array
+        times : np.ndarray
             Times along the second axis of the spectrogram `spec`.
-        freqs : np.array
+        freqs : np.ndarray
             Frequencies along the first axis of the spectrogram `spec`.
         """
         self.spec: torch.Tensor = spec
-        self.times: np.array = times
-        self.freqs: np.array = freqs
+        self.times: np.ndarray = times
+        self.freqs: np.ndarray = freqs
 
     def get_height(self) -> int:
         """Get the height (frequency span) of the spectrogram."""

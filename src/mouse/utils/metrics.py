@@ -57,7 +57,7 @@ def _to_bit_map(
     freq_end: int,
     t_start: int,
     t_end: int,
-) -> np.array(bool):
+) -> np.ndarray:
     """Transform squeak list to 2D bit map.
 
     Ranges bounding the bit map are passed separately due to the use cases
@@ -96,7 +96,7 @@ def _to_bit_map(
 def _to_bit_map_1d(squeaks: List[data_util.SqueakBox],
                    start: int,
                    end: int,
-                   axis: int = 0) -> np.array(bool):
+                   axis: int = 0) -> np.ndarray:
     """Transform squeak list to 1D bit map.
 
     Ranges bounding the bit map are passed separately due to the use cases
@@ -200,7 +200,8 @@ def intersection_over_union_elementwise(
     target_sorted = sorted(target, key=lambda squeak: (squeak.t_start, squeak.t_end))
     cover_sorted = sorted(cover, key=lambda squeak: (squeak.t_end, squeak.t_start))
 
-    result = {target_squeak: dict() for target_squeak in target_sorted}
+    result: Dict[data_util.SqueakBox, dict] = \
+        {target_squeak: dict() for target_squeak in target_sorted}
 
     j_start = 0
     for target_squeak in target_sorted:
@@ -359,7 +360,7 @@ def coverage(
 def iou_dict_to_plain_list(
     iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
     mode: str = "max",
-) -> List[int]:
+) -> List[float]:
     """Transform elementwise iou dict to aggregating list.
 
     Parameters
@@ -407,7 +408,7 @@ def iou_dict_to_plain_list(
 def iou_dict_to_label_lists(
     iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
     mode: str = "max",
-) -> Dict[str, List[int]]:
+) -> Dict[str, List[float]]:
     """Transform elementwise iou dict to aggregating lists grouped by label.
 
     Parameters
@@ -421,7 +422,7 @@ def iou_dict_to_label_lists(
 
     Returns
     -------
-    Dict[str, List[int]]
+    Dict[str, List[float]]
         Aggregated iou for squeaks in iou_dict keys grouped by squeak labels.
 
     Raises
@@ -460,7 +461,7 @@ def iou_dict_to_label_lists(
 
 def _count_hits(
     iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
-    threshold: int = 0.5,
+    threshold: float = 0.5,
     mode: str = "max",
 ) -> int:
     """Count valid detections.
@@ -511,7 +512,7 @@ def _count_hits(
 
 def _count_hits_per_label(
     iou_dict: Dict[data_util.SqueakBox, Dict[data_util.SqueakBox, float]],
-    threshold: int = 0.5,
+    threshold: float = 0.5,
     mode: str = "max",
 ) -> Dict[str, int]:
     """Count valid detections and group them by squeak label.

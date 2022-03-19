@@ -296,8 +296,8 @@ def merge_boxes(
     delta_freq: float,
     delta_time: float,
     label: Optional[Union[int, str]] = None,
-    scores: Optional[Union[np.ndarray, List]] = None,
-) -> Union[List[SqueakBox], Tuple[List[SqueakBox], List[float]]]:
+    scores: Optional[Union[np.ndarray, List[float]]] = None,
+) -> Union[List[SqueakBox], Tuple[List[SqueakBox], Union[np.ndarray, List]]]:
     """Merge boxes that are sufficiently close.
 
     Parameters
@@ -324,7 +324,7 @@ def merge_boxes(
         List[SqueakBox]: merged boxes
             or (if scores are present)
         List[SqueakBox]: merged boxes
-        List[float] : scores for merged boxes
+        Union[np.ndarray, List] : scores for merged boxes
     """
     delta_time_pixels = spec.time_to_pixels(delta_time)
     delta_freq_pixels = spec.freq_to_pixels(delta_freq)
@@ -382,7 +382,7 @@ def merge_boxes(
                 freq_end=max(freq_ends),
                 t_start=min(time_starts),
                 t_end=max(time_ends),
-                label=label,
+                label=str(label),
             ))
         if scores is not None:
             s = aggregated_scores[key]
@@ -441,7 +441,7 @@ def clip_spec_and_boxes(
     t_end: Optional[float] = None,
     freq_start: Optional[float] = None,
     freq_end: Optional[float] = None,
-) -> [sound_util.SpectrogramData, List[SqueakBox]]:
+) -> Tuple[sound_util.SpectrogramData, List[SqueakBox]]:
     """Clip spectrogram and boxes according to specified values."""
     if len(boxes) > 0 and isinstance(boxes[0], list):
         result_nested = True
@@ -472,12 +472,12 @@ def clip_spec_and_boxes(
         return clipped_spec, result_boxes[0]
 
 
-def find_bounding_boxes(mask: np.array, min_side_length: int = 1) -> List[SqueakBox]:
+def find_bounding_boxes(mask: np.ndarray, min_side_length: int = 1) -> List[SqueakBox]:
     """Find bounding boxes that bound interesting areas on mask.
 
     Parameters
     ----------
-    mask : np.array
+    mask : np.ndarray
         A binary mask with interesting areas marked by ones.
     min_side_length : int
         Only boxes greater or equal than a square with sides of length
