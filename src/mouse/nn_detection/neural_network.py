@@ -331,7 +331,7 @@ class USVDetector(pl.LightningModule):
         List[SqueakBox]
             List of predicted boxes.
         """
-        spec = spec_data.spec
+        spec = spec_data.spec.float()
         times = spec_data.times
         freqs = spec_data.freqs
 
