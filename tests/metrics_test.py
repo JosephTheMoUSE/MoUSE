@@ -90,3 +90,22 @@ def test_recall():
     )
     assert overall_recall == 2 / 3
     assert labels_recalls == {"sh": 1, "fm": 1 / 2}
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        ((1.0, 1.0, 1.0), 1),
+        ((1.0, 1.0, 0.0), 1),
+        ((1.0, 1.0, 0.5), 1),
+        ((0.8, 1.0, 999999.0), 1),
+        ((0.8, 1.0, 999999.0), 1),
+        ((0.83, 0.71, 1.0), 0.765),
+        ((0.83, 0.71, 2.0), 0.731),
+        ((0.71, 0.83, 2.0), 0.802),
+    ],
+)
+def test_f_score(test_input, expected):
+    precision, recall, beta = test_input
+    f_score = metrics.f_beta(precision=precision, recall=recall, beta=beta)
+    assert abs(f_score - expected) < 1e-3
