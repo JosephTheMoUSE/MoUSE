@@ -1,5 +1,6 @@
 """Module containing metrics utilities."""
 import warnings
+from enum import Enum
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -200,8 +201,8 @@ def intersection_over_union_elementwise(
     target_sorted = sorted(target, key=lambda squeak: (squeak.t_start, squeak.t_end))
     cover_sorted = sorted(cover, key=lambda squeak: (squeak.t_end, squeak.t_start))
 
-    result: Dict[data_util.SqueakBox, dict] = \
-        {target_squeak: dict() for target_squeak in target_sorted}
+    result: Dict[data_util.SqueakBox,
+                 dict] = {target_squeak: dict() for target_squeak in target_sorted}
 
     j_start = 0
     for target_squeak in target_sorted:
@@ -724,3 +725,20 @@ def detection_recall(
         labels_recalls[label] = labels_tp[label] / labels_positives[label]
 
     return overall_recall, labels_recalls
+
+
+def f_beta(precision: float, recall: float, beta: float):
+    """Calculate generalised version of F-score.
+
+    f_beta score is a generalised version of F-score, where recall is `beta` times
+    more important than `precision`.
+    """
+    denominator = beta**2 * precision + recall
+    if denominator != 0:
+        return (1 + beta**2) * precision * recall / denominator
+    return 0
+
+
+class Metric(str, Enum):  # noqa D101
+    F_BETA = "f_beta"
+    IOU = "iou"
