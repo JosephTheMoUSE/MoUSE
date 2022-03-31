@@ -1,15 +1,57 @@
 """Module containing mainly paths to data folders. Used for method development."""
+from __future__ import annotations
 
-from pathlib import Path
+import json
+import pathlib
+from typing import List, Union
 
-DATA_PATH = Path("/", "data", "gryzonie")
-DATA_VPA = DATA_PATH.joinpath("dla_UJ2")
-DATA_2018_1 = DATA_PATH.joinpath("folder1")
-DATA_2018_2 = DATA_PATH.joinpath("folder2")
-DATA_2020 = DATA_PATH.joinpath("LIT_DP_20201202")
+import environ
 
-SOURCES_LABELED = [DATA_VPA, DATA_2018_1, DATA_2018_2]
-SOURCES_UNLABELED = [DATA_2020]  # todo: add other sources
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
+
+
+def _path_converter(
+        path: Union[None, str,
+                    List[str]]) -> Union[None, pathlib.Path, List[pathlib.Path]]:
+    if path is None:
+        return None
+    elif isinstance(path, List):
+        return [pathlib.Path(p) for p in path]
+    else:
+        return pathlib.Path(path)
+
+
+@environ.config
+class DataSources:
+    """Container for data paths.
+
+    To create variables use:
+     - `DataSources.from_json()` to config from "user_config.json"
+     - `DataSources.from_environ()` to config from the environment
+    """
+
+    selected_source: pathlib.Path = environ.var(name="MAIN_SOURCE",
+                                                default=None,
+                                                converter=_path_converter)
+    labeled_sources: List[pathlib.Path] = environ.var(
+        name="LABELED_SOURCES",
+        default=None,
+        converter=_path_converter,
+    )
+
+    unlabeled_sources: List[pathlib.Path] = environ.var(
+        name="UNLABELED_SOURCES",
+        default=None,
+        converter=_path_converter,
+    )
+
+    @classmethod
+    def from_json(self) -> DataSources:
+        """Load configuration from "user_config.json"."""
+        config = PROJECT_ROOT.joinpath("user_config.json")
+        with config.open("r") as fp:
+            return DataSources.from_environ(json.load(fp))
+
 
 # names of columns in labeled data files
 COL_SELECTION = "Selection"
