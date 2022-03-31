@@ -11,3 +11,4 @@ scikit-image
 pytorch_lightning
 gdown
 rtree
+environ-config
