@@ -12,3 +12,5 @@ pytorch_lightning
 gdown
 rtree
 environ-config
+ray
+bayesian-optimization
