@@ -12,3 +12,4 @@
 # Note: adding import in `init` will still allow for (2)
 #       but be careful with import * because it may introduce shadowing of functions # noqa
 from .GAC import *  # noqa
+from .optimisation import *  # noqa
