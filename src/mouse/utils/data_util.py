@@ -1,25 +1,46 @@
 """Module containing utilities for loading and processing sound data."""
+from __future__ import annotations
+
 import pathlib
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict
 
 import numpy as np
 import pandas as pd
-from skimage import measure
 from rtree import Index
+from skimage import measure
 
 import mouse.utils.constants as const
 from mouse.utils import sound_util
 
 # Storage classes
 
-DataFolder = namedtuple("DataFolder", ["wavs", "df", "folder_path", "signals"])
+
+@dataclass
+class DataFolder:
+    """Storage class for a set of recordings."""
+
+    wavs: List[pathlib.Path]
+    df: pd.DataFrame
+    folder_path: pathlib.Path
+    signals: List[sound_util.SignalData]
+
+    def get_signal(self, name: str) -> Optional[sound_util.SignalData]:
+        """Get signal based on its filename `name`."""
+        for signal in self.signals:
+            if signal.name == name:
+                return signal
+        return None
 
 
 @dataclass
 class SqueakBox:
-    """Storage class for bounding boxes."""
+    """Storage class for bounding boxes.
+
+    This class stores time and frequency values described by pixels on an associated
+    spectrogram.
+    """
 
     freq_start: int
     freq_end: int
@@ -36,6 +57,80 @@ class SqueakBox:
         """Create iterator."""
         return iter(
             (self.freq_start, self.freq_end, self.t_start, self.t_end, self.label))
+
+
+@dataclass(frozen=True)
+class SqueakBoxSI:
+    """Storage class for bounding boxes.
+
+    This class stores time and frequency values described by SI units ([s] and [Hz]).
+    """
+
+    freq_start: float
+    freq_end: float
+    t_start: float
+    t_end: float
+    label: Optional[str] = None
+
+    def to_dict(self):
+        """Convert `SqueakBoxSI` to dict."""
+        return {
+            "time_start": self.t_start,
+            "time_end": self.t_end,
+            "freq_start": self.freq_start,
+            "freq_end": self.freq_end,
+            "label": self.label,
+        }
+
+    def to_squeak_box(self, spec_data: sound_util.SpectrogramData):
+        """Convert `SqueakBoxSI` to `SqueakBox`."""
+        t_start = np.abs(spec_data.times - self.t_start).argmin()
+        t_end = np.abs(spec_data.times - self.t_end).argmin()
+        freq_start = np.abs(spec_data.freqs - self.freq_start).argmin()
+        freq_end = np.abs(spec_data.freqs - self.freq_end).argmin()
+        return SqueakBox(
+            freq_start=int(freq_start),
+            freq_end=int(freq_end),
+            t_start=int(t_start),
+            t_end=int(t_end),
+            label=self.label,
+        )
+
+    @staticmethod
+    def from_dict(**values) -> SqueakBoxSI:
+        """Load `SqueakBoxSI` from dict."""
+        annotation = SqueakBoxSI(**values)
+        return annotation
+
+    @staticmethod
+    def from_squeak_box(squeak_box: SqueakBox,
+                        spec_data: sound_util.SpectrogramData) -> SqueakBoxSI:
+        """Load `SqueakBoxSI` from `SqueakBox`."""
+        t_start, t_end = spec_data.times[[squeak_box.t_start, squeak_box.t_end]]
+        freq_start, freq_end = spec_data.freqs[
+            [squeak_box.freq_start, squeak_box.freq_end]
+        ]
+        annotation = SqueakBoxSI(
+            t_start=float(t_start),
+            t_end=float(t_end),
+            freq_start=float(freq_start),
+            freq_end=float(freq_end),
+            label=squeak_box.label if squeak_box.label else None,
+        )
+
+        return annotation
+
+
+@dataclass(frozen=True)
+class SignalNoise:
+    """Storage class for noise information.
+
+    Time for `start` and `end` of the noise is given in seconds.
+    """
+
+    config_id: str
+    start: float
+    end: float
 
 
 # data loading utilities
