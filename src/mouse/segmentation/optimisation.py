@@ -17,19 +17,32 @@ from mouse.utils.metrics import Metric
 from mouse.utils.sound_util import SpectrogramData
 
 GAC_SEARCH_SPACE = {
-    "iterations": tune.uniform(1, 40),
-    "smoothing": tune.uniform(0.0, 7.99),
-    "flood_threshold": tune.uniform(0.1, 0.99),
-    "threshold": tune.uniform(0.2, 0.99),
-    "sigma": tune.uniform(1, 10),
+    "iterations": tune.sample.Float(1, 40),
+    "smoothing": tune.sample.Float(0.0, 7.99),
+    "flood_threshold": tune.sample.Float(0.1, 0.99),
+    "_balloon_latent": tune.sample.Float(0.2, 1.8),
+    "sigma": tune.sample.Float(1, 10),
 }
+
+
+def balloon_from_latent(balloon_latent: float) -> int:
+    """Extract balloon parameter from latent variable."""
+    if balloon_latent > 1:
+        return -1
+    return 1
+
+
+def threshold_from_latent(balloon_latent: float) -> float:
+    """Extract threshold parameter from latent variable."""
+    if balloon_latent > 1:
+        return 2 - balloon_latent
+    return balloon_latent
 
 
 def _test_gac_config(
     config: Dict[str, float],
     ground_truth: List[SqueakBox],
     spec: SpectrogramData,
-    balloon: int,
     alpha: float,
     threshold_metric: float,
     metric: Metric,
@@ -43,8 +56,8 @@ def _test_gac_config(
         filter=True,
         iterations=int(config["iterations"]),
         smoothing=int(config["smoothing"]),
-        threshold=config["threshold"],
-        balloon=balloon,
+        threshold=threshold_from_latent(config["_balloon_latent"]),
+        balloon=balloon_from_latent(config["_balloon_latent"]),
         level_set=level_set,
         preprocessing_fn=partial(segmentation.inverse_gaussian_gradient,
                                  sigma=config["sigma"],
@@ -94,7 +107,6 @@ def optimise_gac(
     spec: SpectrogramData,
     ground_truth: List[SqueakBox],
     alpha: float,
-    balloon: float,
     num_samples: int,
     random_search_steps: int,
     max_concurrent: int,
@@ -115,9 +127,6 @@ def optimise_gac(
 
     alpha: float
         `alpha` parameter of GAC. This parameter is not optimised.
-
-    balloon: float
-        `balloon` parameter of GAC. This parameter is not optimised.
 
     num_samples: int
         Number of tests performed during optimisation.
@@ -152,7 +161,6 @@ def optimise_gac(
             _test_gac_config,
             spec=spec,
             ground_truth=ground_truth,
-            balloon=balloon,
             beta=beta,
             alpha=alpha,
             metric=metric,
