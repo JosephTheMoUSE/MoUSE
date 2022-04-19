@@ -142,3 +142,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Data files
+scripts/**/*.csv
+scripts/**/*.wav
+scripts/**/*.json
+scripts/**/*.jpeg
+scripts/**/*.jpg
