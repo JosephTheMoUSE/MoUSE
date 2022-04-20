@@ -3,22 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
-from typing import Dict, List, Any
-
-import pandas as pd
-import ray
-from ray import tune
-
-import mouse
-import mouse.segmentation
-from mouse.denoising import denoising
-from mouse.segmentation import balloon_from_latent, threshold_from_latent
-from mouse.utils import data_util, sound_util
-from mouse.utils.data_util import SignalNoise
-from mouse.utils.metrics import Metric
-import pathlib
-from collections import defaultdict
 from functools import partial
+from typing import Any
 from typing import Dict, List
 
 import pandas as pd
@@ -28,34 +14,43 @@ from skimage import segmentation
 
 import mouse
 import mouse.segmentation
+import mouse.segmentation
 from mouse.denoising import denoising
 from mouse.segmentation import balloon_from_latent, threshold_from_latent
 from mouse.utils import data_util, sound_util, metrics
-from mouse.utils.constants import DataSources
+from mouse.utils.data_util import SignalNoise
 from mouse.utils.metrics import Metric
 
+# Constants
+# # Paths
+NOISES = pathlib.Path("noises")
+RESULTS_ROOT = pathlib.Path("optimisation_results")
+OPTIMISATION_FINAL_RESULTS = RESULTS_ROOT.joinpath("final")
+OPTIMISATION_PARTIAL_RESULTS = RESULTS_ROOT.joinpath("partial")
+DETECTIONS = RESULTS_ROOT.joinpath("detections")
+METRICS = RESULTS_ROOT.joinpath("metrics")
 
+# # Optimisation-related constants
+MAX_CONCURRENT = 3  # max number of concurrent optimisation trials
+TRAIN_TIME = 10.0
+SAVE_METRICS = True
+RANDOM_SEARCH_STEPS = 40  # number of trials configured by Bayesian optimisation
+NOT_RANDOM_SEARCH_STEPS = (
+    160  # number of random trials for initialising the optimisation process
+)
+NUM_SAMPLES = RANDOM_SEARCH_STEPS + NOT_RANDOM_SEARCH_STEPS
+BETA = 100.0
+ALPHA = 200
+
+# # Spectrogram generation
 N_FFT = 512
 WIN_LENGTH = 256
 HOP_LENGTH = 128
-MAX_CONCURRENT = 3
-NOISE_TYPE = "strong"
-TRAIN_TIME = 10.0
-BETA = 100.0
-ALPHA = 200
-NOISES = pathlib.Path("noises")
-OPTIMISATION_RESULTS = pathlib.Path("optimisation_results")
-OPTIMISATION_PARTIAL_RESULTS = pathlib.Path("optimisation_partial_results")
-DETECTIONS = pathlib.Path("detections")
-METRICS = pathlib.Path("metrics")
-RANDOM_SEARCH_STEPS = 200
-NUM_SAMPLES = 40
-SAVE_METRICS = True
 
 
 def load_noises(recording_name: str) -> List[SignalNoise]:
     with NOISES.joinpath(recording_name).open("r") as fp:
-        noise_times: Dict[str, dict] = json.loads(fp.read())
+        noise_times: Dict[str, dict] = json.load(fp)
 
     return [
         SignalNoise(config_id=config_id, start=time_info["start"], end=time_info["end"])
@@ -64,8 +59,8 @@ def load_noises(recording_name: str) -> List[SignalNoise]:
 
 
 def load_gac_config(recording_name: str, config_id: str):
-    with OPTIMISATION_RESULTS.joinpath(recording_name).open("r") as fp:
-        configs: Dict[str, dict] = json.loads(fp.read())
+    with OPTIMISATION_FINAL_RESULTS.joinpath(recording_name).open("r") as fp:
+        configs: Dict[str, dict] = json.load(fp)
 
     return configs[config_id]
 
@@ -182,7 +177,7 @@ def save_best_configuration(
 ):
     balloon = balloon_from_latent(analysis.best_config["_balloon_latent"])
     threshold = threshold_from_latent(analysis.best_config["_balloon_latent"])
-    result_path = OPTIMISATION_RESULTS.joinpath(recording_name)
+    result_path = OPTIMISATION_FINAL_RESULTS.joinpath(recording_name)
 
     result = dict()
     if result_path.exists():
@@ -237,6 +232,7 @@ def optimise(
                 train_boxes=len(ground_truth_train),
             )
         ],
+        remove_ray_results=False,
     )
     ray.shutdown()
     save_best_configuration(
@@ -357,7 +353,7 @@ def main(
             continue
 
         optimisation_ready = is_configuration_present(
-            target_folder=OPTIMISATION_RESULTS,
+            target_folder=OPTIMISATION_FINAL_RESULTS,
             recording_name=recording_name,
             config_id=noise.config_id,
         )
@@ -396,15 +392,15 @@ def main(
         else:
             print(f"Skipping GAC optimisation...")
 
-        detect_and_process_detections(
-            ground_truth,
-            noise.config_id,
-            recording_name,
-            spec,
-            train_time,
-            save_metrics,
-            beta=beta,
-        )
+        # detect_and_process_detections(
+        #     ground_truth,
+        #     noise.config_id,
+        #     recording_name,
+        #     spec,
+        #     train_time,
+        #     save_metrics,
+        #     beta=beta,
+        # )
 
 
 if __name__ == "__main__":
@@ -418,9 +414,15 @@ if __name__ == "__main__":
     folders = data_util.load_data([source_folder], with_labels=True)
     data_folder: data_util.DataFolder = folders[0]
 
-    for path in [OPTIMISATION_RESULTS, OPTIMISATION_PARTIAL_RESULTS]:
+    for path in [
+        NOISES,
+        OPTIMISATION_FINAL_RESULTS,
+        OPTIMISATION_PARTIAL_RESULTS,
+        DETECTIONS,
+        METRICS,
+    ]:
         if not path.exists():
-            path.mkdir()
+            path.mkdir(parents=True)
 
     main(
         data_folder=data_folder,
