@@ -114,6 +114,7 @@ def optimise_gac(
     threshold_metric: float,
     beta: Optional[float],
     callbacks: Optional[Sequence[tune.Callback]],
+    remove_ray_results: bool = True,
 ) -> tune.ExperimentAnalysis:
     """Search for best GAC parameters with tune.
 
@@ -151,6 +152,10 @@ def optimise_gac(
     callbacks: Optional[Sequence[tune.Callback]]
         Callbacks called after every test.
 
+    remove_ray_results: bool
+        Specifies whether optimisation results will be deleted from disk. Should be
+        `False` if many optimisation instances are executed.
+
     Returns
     -------
     tune.ExperimentAnalysis
@@ -179,6 +184,7 @@ def optimise_gac(
         local_dir=tempfile.gettempdir(),
         name="mouse/GAC_optimisation",
     )
-    shutil.rmtree(Path(tempfile.gettempdir()).joinpath("mouse"))
+    if remove_ray_results:
+        shutil.rmtree(Path(tempfile.gettempdir()).joinpath("mouse"))
 
     return analysis
