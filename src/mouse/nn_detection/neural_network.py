@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 from mouse.utils.data_util import merge_boxes, SqueakBox
 from mouse.utils.sound_util import SpectrogramData
-from .modeling_utils import get_backbone, Normalize
+from mouse.utils.modeling_utils import get_backbone, Normalize
 
 PRETRAINED_MODELS_CHECKPOINTS = {
     "f-rcnn-custom": {
