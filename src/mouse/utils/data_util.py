@@ -131,6 +131,7 @@ class SignalNoise:
     config_id: str
     start: float
     end: float
+    noise_decrease: float
 
 
 # data loading utilities
@@ -156,7 +157,7 @@ def load_data_paths(
     wav = []
 
     for file in folder.iterdir():
-        if file.is_file():
+        if file.is_file() and not file.name.startswith('.'):
             if file.name.endswith("wav"):
                 wav.append(file)
             elif file.name.endswith("txt"):
@@ -483,7 +484,7 @@ def merge_boxes(
             s = aggregated_scores[key]
             merged_scores.append(sum(s) / len(s))
 
-    return merged_squeaks if scores is None else (merged_squeaks, scores)
+    return merged_squeaks if scores is None else (merged_squeaks, merged_scores)
 
 
 def clip_boxes(

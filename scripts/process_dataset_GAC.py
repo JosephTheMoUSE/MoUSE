@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
+import os
 import pathlib
 from functools import partial
 from typing import Any
@@ -23,6 +25,7 @@ from mouse.segmentation import balloon_from_latent, threshold_from_latent
 from mouse.utils import data_util, sound_util, metrics
 from mouse.utils.data_util import SignalNoise
 from mouse.utils.metrics import Metric
+from multiprocessing import Pool
 
 # Constants
 # # Paths
@@ -34,7 +37,7 @@ DETECTIONS = RESULTS_ROOT.joinpath("detections")
 METRICS = RESULTS_ROOT.joinpath("metrics")
 
 # # Optimisation-related constants
-MAX_CONCURRENT = 3  # max number of concurrent optimisation trials
+MAX_CONCURRENT = 1  # max number of concurrent optimisation trials
 TRAIN_TIME = 10.0
 TIME_DELTA = 0.01
 SAVE_METRICS = True
@@ -135,13 +138,19 @@ def find_noises_in_recording(data_folder: data_util.DataFolder, recording_name: 
                 elif current_end < box.t_end:
                     current_end = box.t_end
             if spans:
-                weights = np.array([np.mean(np.quantile(spec_data.spec[:, s:e], 0.75, axis=1)) for s, e in spans])
-                span = spans[np.random.choice(len(spans), p=weights/np.sum(weights))]
+                try:
+                    weights = np.array([np.mean(np.quantile(spec_data.spec[:, s:e], 0.75, axis=1)) for s, e in spans if e - s > 1])
+                    span = spans[np.random.choice(len(spans), p=weights/np.sum(weights))]
+                except:
+                    span = [0, spec_data.times.shape[0] - 1]
+                    noise_decrease = noise_decrease / 2
+                    warnings.warn(f"Error occurred while searching for noise. For file {recording_name}\n"
+                                  "Span will be chosen randomly. Decreasing `noise_decrease` by half")
             else:
                 # TODO: fall back strategy
                 span = [0, spec_data.times.shape[0] - 1]
                 noise_decrease = noise_decrease / 2
-                warnings.warn("Can't find sufficiently long span without calls. "
+                warnings.warn(f"Can't find sufficiently long span without calls. For file {recording_name}\n"
                               "Span will be chosen randomly. Decreasing `noise_decrease` by half")
         else:
             span = [0, spec_data.times.shape[0] - 1]
@@ -500,7 +509,9 @@ def main(
             spec=spec, t_start=noise.start, t_end=noise.end, boxes=ground_truth
         )
         if len(boxes_noise) > 0:
-            print(f"{len(boxes_noise)} USVs present in the noise area!!! Change script to overwrite default behavior")
+            warnings.warn(f"{len(boxes_noise)} USVs present in the noise area!!! "
+                          f"Change script to overwrite default behavior")
+            # continue
 
         if not optimisation_ready:
             optimise(
@@ -528,18 +539,53 @@ def main(
             )
 
 
+def process_recording(recording, data_folder, args):
+    main(
+        data_folder=data_folder,
+        recording_name=recording.name,
+        beta=BETA,
+        train_time=TRAIN_TIME,
+        random_search_steps=RANDOM_SEARCH_STEPS,
+        num_samples=NUM_SAMPLES,
+        save_metrics=(not args.no_save_metrics),
+        detect=args.detect
+    )
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train and test GAC on a file.")
-    parser.add_argument("recording", help="a path to the recording")
+    parser.add_argument("dataset_dir", help="a path to the recording")
     parser.add_argument('--no_save_metrics', action='store_true')
     parser.add_argument('--detect', action='store_true')
-
+    parser.add_argument('--worker_count', default=os.cpu_count(), type=int)
+    parser.add_argument('--chunk_num', default=0, type=int)
+    parser.add_argument('--chunk_count', default=3, type=int)
     args = parser.parse_args()
-    recording = pathlib.Path(args.recording)
-    source_folder = recording.parent
 
-    folders = data_util.load_data([source_folder], with_labels=True)
-    data_folder: data_util.DataFolder = folders[0]
+    #worker_count = args.worker_count
+    MAX_CONCURRENT = args.worker_count
+
+    source_folder = pathlib.Path(args.dataset_dir)
+    source_folders = [d for d in source_folder.iterdir()
+                      if d.is_dir() and not d.name.startswith('.')
+                      and NOISES.name not in d.name
+                      and RESULTS_ROOT.name not in d.name
+                      and OPTIMISATION_FINAL_RESULTS.name not in d.name
+                      and OPTIMISATION_PARTIAL_RESULTS.name not in d.name
+                      and DETECTIONS.name not in d.name
+                      and METRICS.name not in d.name]
+
+    folders = sorted(data_util.load_data(source_folders, with_labels=True), key=lambda x: x.folder_path)
+    l = len(folders)
+    chunk = l // args.chunk_count
+    folders = folders[chunk*args.chunk_num:chunk*(args.chunk_num+1)]
+    #data_folder: data_util.DataFolder = folders[0]
+
+    NOISES = source_folder.joinpath(NOISES)
+    OPTIMISATION_FINAL_RESULTS = source_folder.joinpath(OPTIMISATION_FINAL_RESULTS)
+    OPTIMISATION_PARTIAL_RESULTS = source_folder.joinpath(OPTIMISATION_PARTIAL_RESULTS)
+    DETECTIONS = source_folder.joinpath(DETECTIONS)
+    METRICS = source_folder.joinpath(METRICS)
 
     for path in [
         NOISES,
@@ -551,13 +597,12 @@ if __name__ == "__main__":
         if not path.exists():
             path.mkdir(parents=True)
 
-    main(
-        data_folder=data_folder,
-        recording_name=recording.name,
-        beta=BETA,
-        train_time=TRAIN_TIME,
-        random_search_steps=RANDOM_SEARCH_STEPS,
-        num_samples=NUM_SAMPLES,
-        save_metrics=(not args.no_save_metrics),
-        detect=args.detect
-    )
+    #process = functools.partial(process_recording, data_folder=data_folder, args=args)
+    for data_folder in folders:
+        recording = data_folder.wavs[0]
+        try:
+            process_recording(recording, data_folder=data_folder, args=args)
+        except:
+            warnings.warn(f'Encountered error with file {recording}')
+    #with Pool(args.worker_count) as p:
+    #    p.map(process, recordings)
