@@ -30,14 +30,14 @@ class BackboneBlock(nn.Module):
     """
 
     def __init__(
-            self,
-            in_channels: int,
-            out_channels: int,
-            kernel_size: Tuple[int],
-            stride: Union[int, Tuple] = 1,
-            padding: Union[int, Tuple, str] = 1,
-            negative_slope: float = 0.01,
-            padding_mode: str = "zeros",
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: Tuple[int],
+        stride: Union[int, Tuple] = 1,
+        padding: Union[int, Tuple, str] = 1,
+        negative_slope: float = 0.01,
+        padding_mode: str = "zeros",
     ):
         super().__init__()
         self.layers = nn.Sequential(

@@ -17,7 +17,6 @@ from mouse.utils.data_util import SqueakBox
 from mouse.utils.sound_util import SpectrogramData
 from mouse.utils.modeling_utils import get_backbone
 
-
 PRETRAINED_MODELS_CHECKPOINTS = {
     "cnn-binary-v1-custom": {
         "url":
@@ -28,14 +27,14 @@ PRETRAINED_MODELS_CHECKPOINTS = {
 
 
 def classify_USVs(
-        spec_data: SpectrogramData,
-        annotations: List[SqueakBox],
-        model_name: str,
-        cache_dir: Path,
-        batch_size: int,
-        confidence_threshold: float = -1,
-        silent: bool = False,
-        callback: Optional[Callable] = None,
+    spec_data: SpectrogramData,
+    annotations: List[SqueakBox],
+    model_name: str,
+    cache_dir: Path,
+    batch_size: int,
+    confidence_threshold: float = -1,
+    silent: bool = False,
+    callback: Optional[Callable] = None,
 ):
     """Load and produce predictions for spectrogram data.
 
@@ -95,6 +94,7 @@ class USVClassifier(pl.LightningModule):
         When True loads model in inference environment
         with no access to pretrained backbone
     """
+
     def __init__(self, args: Namespace, inference_only: bool = False):
         super().__init__()
         self.save_hyperparameters(args)
@@ -104,9 +104,11 @@ class USVClassifier(pl.LightningModule):
                                      inference_only=inference_only)
 
         if self.hparams.add_pos_embeddings:
-            self.cls = nn.Linear(in_features=self.backbone.out_channels + 4, out_features=self.hparams.num_classes)
+            self.cls = nn.Linear(in_features=self.backbone.out_channels + 4,
+                                 out_features=self.hparams.num_classes)
         else:
-            self.cls = nn.Linear(in_features=self.backbone.out_channels, out_features=self.hparams.num_classes)
+            self.cls = nn.Linear(in_features=self.backbone.out_channels,
+                                 out_features=self.hparams.num_classes)
 
     def forward(self, specs, boxes=None) -> Tensor:
         """Modules forward propagation method."""
@@ -114,28 +116,25 @@ class USVClassifier(pl.LightningModule):
         feats = F.adaptive_avg_pool2d(feats, (1, 1))
         feats = feats.view(feats.shape[0], -1)
         if boxes and self.hparams.add_pos_embeddings:
-            pos = [(min(box.freq_start, self.hparams.max_pos) * np.pi / 2 / self.hparams.max_pos,
-                    min(box.freq_end, self.hparams.max_pos) * np.pi / 2 / self.hparams.max_pos)
-                   for box in boxes]
+            pos = [(min(box.freq_start, self.hparams.max_pos) * np.pi / 2 /
+                    self.hparams.max_pos,
+                    min(box.freq_end, self.hparams.max_pos) * np.pi / 2 /
+                    self.hparams.max_pos) for box in boxes]
             pos_embeds = torch.tensor(
-                [(np.cos(p[0]), np.sin(p[0]), np.cos(p[1]), np.sin(p[1]))
-                 for p in pos],
+                [(np.cos(p[0]), np.sin(p[0]), np.cos(p[1]), np.sin(p[1])) for p in pos],
                 device=feats.device,
-                dtype=torch.float32
-            )
+                dtype=torch.float32)
             return F.softmax(self.cls(torch.hstack((feats, pos_embeds))), dim=1)
         else:
             return F.softmax(self.cls(feats), dim=1)
 
-    def predict_for_annotations(
-            self,
-            spec_data: SpectrogramData,
-            annotations: List[SqueakBox],
-            batch_size: Optional[int] = None,
-            confidence_threshold: float = -1,
-            silent: bool = False,
-            callback: Optional[Callable] = None
-    ) -> List[SqueakBox]:
+    def predict_for_annotations(self,
+                                spec_data: SpectrogramData,
+                                annotations: List[SqueakBox],
+                                batch_size: Optional[int] = None,
+                                confidence_threshold: float = -1,
+                                silent: bool = False,
+                                callback: Optional[Callable] = None) -> List[SqueakBox]:
         """Use to classify annotations.
 
         Parameters
@@ -171,9 +170,12 @@ class USVClassifier(pl.LightningModule):
         for idx, annotation in enumerate(tqdm(annotations, disable=silent)):
             if annotation.t_end - annotation.t_start <= max_call_len:
                 annotation.t_start = max(0, annotation.t_start - add_time_pixel_context)
-                annotation.t_end = min(spec_data.times.shape[-1], annotation.t_end + add_time_pixel_context)
-                annotation.freq_start = max(0, annotation.freq_start - add_freq_pixel_context)
-                annotation.freq_end = min(spec_data.freqs.shape[-1], annotation.freq_end + add_freq_pixel_context)
+                annotation.t_end = min(spec_data.times.shape[-1],
+                                       annotation.t_end + add_time_pixel_context)
+                annotation.freq_start = max(
+                    0, annotation.freq_start - add_freq_pixel_context)
+                annotation.freq_end = min(spec_data.freqs.shape[-1],
+                                          annotation.freq_end + add_freq_pixel_context)
                 examples.append(annotation)
                 example_map.append(idx)
             else:
@@ -184,9 +186,11 @@ class USVClassifier(pl.LightningModule):
                     chunk.t_start = start
                     chunk.t_end = start + max_call_len
                     chunk.t_start = max(0, chunk.t_start - add_time_pixel_context)
-                    chunk.t_end = min(spec_data.times.shape[-1], chunk.t_end + add_time_pixel_context)
+                    chunk.t_end = min(spec_data.times.shape[-1],
+                                      chunk.t_end + add_time_pixel_context)
                     chunk.freq_start = max(0, chunk.freq_start - add_freq_pixel_context)
-                    chunk.freq_end = min(spec_data.freqs.shape[-1], chunk.freq_end + add_freq_pixel_context)
+                    chunk.freq_end = min(spec_data.freqs.shape[-1],
+                                         chunk.freq_end + add_freq_pixel_context)
                     examples.append(chunk)
                     example_map.append(idx)
 
@@ -204,7 +208,9 @@ class USVClassifier(pl.LightningModule):
                     scores, pred = torch.max(self(images, examples_to_process).detach(), dim=1)
                     scores = scores.cpu().numpy()
                     pred = pred.cpu().numpy()
-                preds.extend([(idx, p, s) for idx, p, s in zip(examples_to_process_map, pred, scores)])
+                preds.extend([(idx, p, s) for idx,
+                              p,
+                              s in zip(examples_to_process_map, pred, scores)])
         while examples:
             examples_to_process = examples[:batch_size]
             examples_to_process_map = example_map[:batch_size]
@@ -216,7 +222,10 @@ class USVClassifier(pl.LightningModule):
                 scores, pred = torch.max(self(images, examples_to_process).detach(), dim=1)
                 scores = scores.cpu().numpy()
                 pred = pred.cpu().numpy()
-            preds.extend([(idx, p, s) for idx, p, s in zip(examples_to_process_map, pred, scores)
+            preds.extend([(idx, p, s)
+                          for idx,
+                          p,
+                          s in zip(examples_to_process_map, pred, scores)
                           if s >= confidence_threshold])
         max_score = 0
         pred = 0
@@ -225,15 +234,19 @@ class USVClassifier(pl.LightningModule):
                 break
             if s > max_score:
                 pred = p
-            if i+1 == len(preds) or idx != preds[i+1][0]:
+            if i + 1 == len(preds) or idx != preds[i + 1][0]:
                 annotations[idx].label = self.hparams.labels[pred]
                 max_score = 0
                 pred = 0
         return annotations
 
-    def _construct_model_input(self, spec_data: SpectrogramData, examples_to_process: List[SqueakBox]):
-        box_contents = [spec_data.spec[box.freq_start:box.freq_end, box.t_start:box.t_end]
-                        for box in examples_to_process]
+    def _construct_model_input(self,
+                               spec_data: SpectrogramData,
+                               examples_to_process: List[SqueakBox]):
+        box_contents = [
+            spec_data.spec[box.freq_start:box.freq_end, box.t_start:box.t_end]
+            for box in examples_to_process
+        ]
         H = max([box_content.shape[0] for box_content in box_contents] + [32])
         W = max([box_content.shape[1] for box_content in box_contents] + [32])
         images = torch.zeros(len(box_contents), 1, H, W, dtype=torch.float32)
