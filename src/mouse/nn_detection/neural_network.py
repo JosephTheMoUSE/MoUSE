@@ -110,7 +110,7 @@ def _preprocess_spec(spec, freqs, use_log, clip_18khz, gamma):
 
 # pruned version of model, full train loop is published in other repo
 class USVDetector(pl.LightningModule):
-    """General purpose model used to load serialized model and produce predictions.
+    """General purpose detection model used to load serialized model and produce predictions.
 
     Parameters
     ----------
@@ -171,7 +171,7 @@ class USVDetector(pl.LightningModule):
         return model
 
     def forward(self, specs: Tensor) -> Union[Tensor, Dict[str, Tensor]]:
-        """Modules forward method."""
+        """Modules forward propagation method."""
         return self.model(specs)
 
     def combine_and_filter_predictions(

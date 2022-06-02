@@ -1,3 +1,4 @@
+"""Module implementing CNN-based USVs classification."""
 from argparse import Namespace
 from typing import Tuple, List, Optional, Callable
 from copy import deepcopy as copy
@@ -84,6 +85,16 @@ def classify_USVs(
 
 
 class USVClassifier(pl.LightningModule):
+    """General purpose CNN classification model used to load serialized and classify USVs.
+
+    Parameters
+    ----------
+    args: Namespace
+        Used to reproduce model architecture. (loaded from checkpoint)
+    inference_only: bool
+        When True loads model in inference environment
+        with no access to pretrained backbone
+    """
     def __init__(self, args: Namespace, inference_only: bool = False):
         super().__init__()
         self.save_hyperparameters(args)
@@ -98,6 +109,7 @@ class USVClassifier(pl.LightningModule):
             self.cls = nn.Linear(in_features=self.backbone.out_channels, out_features=self.hparams.num_classes)
 
     def forward(self, specs, boxes=None) -> Tensor:
+        """Modules forward propagation method."""
         feats = self.backbone(specs)
         feats = F.adaptive_avg_pool2d(feats, (1, 1))
         feats = feats.view(feats.shape[0], -1)
