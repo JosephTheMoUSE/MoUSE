@@ -77,8 +77,10 @@ def get_custom_backbone():
         Small sequential model.
     """
     return nn.Sequential(
-        BackboneBlock(1, 16, kernel_size=(3, 3), padding=0, stride=1),
+        BackboneBlock(1, 16, kernel_size=(5, 5), padding=0, stride=1),
         BackboneBlock(16, 32, kernel_size=(3, 3), padding=0, stride=1),
+        BackboneBlock(32, 64, kernel_size=(3, 3), padding=0, stride=1),
+        BackboneBlock(64, 128, kernel_size=(3, 3), padding=0, stride=1),
     )
 
 
@@ -105,7 +107,7 @@ def get_backbone(model_name: str,
     """
     if model_name == "custom":
         backbone = get_custom_backbone()
-        out_channels = 32
+        out_channels = 128
     elif model_name == "resnet-18":
         resnet = models.resnet18(pretrained=False)
         resnet.conv1 = nn.Conv2d(
