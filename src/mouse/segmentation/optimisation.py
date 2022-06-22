@@ -1,9 +1,10 @@
 """Module for automatic GAC configuration."""
 import shutil
 import tempfile
+from collections import defaultdict
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Union
 
 from ray import tune
 from ray.tune.suggest import ConcurrencyLimiter
@@ -17,12 +18,13 @@ from mouse.utils.metrics import Metric
 from mouse.utils.sound_util import SpectrogramData
 
 GAC_SEARCH_SPACE = {
-    "iterations": tune.sample.Float(1, 40),
-    "smoothing": tune.sample.Float(0.0, 7.99),
-    "flood_threshold": tune.sample.Float(0.1, 0.99),
-    "_balloon_latent": tune.sample.Float(0.2, 1.8),
-    "sigma": tune.sample.Float(1, 10),
+    "iterations": (1, 40),
+    "smoothing": (0.0, 7.99),
+    "flood_threshold": (0.1, 0.99),
+    "_balloon_latent": (0.2, 1.8),
+    "sigma": (1, 10),
 }
+GAC_SEARCH_SPACE_TUNE = {k: tune.sample.Float(*v) for k, v in GAC_SEARCH_SPACE.items()}
 
 
 def balloon_from_latent(balloon_latent: float) -> int:
@@ -40,14 +42,23 @@ def threshold_from_latent(balloon_latent: float) -> float:
 
 
 def _test_gac_config(
-    config: Dict[str, float],
     ground_truth: List[SqueakBox],
     spec: SpectrogramData,
     alpha: float,
     threshold_metric: float,
     metric: Metric,
     beta: Optional[float] = None,
+    **kwargs,
 ):
+    use_tune = True
+    if 'config' not in kwargs:
+        use_tune = False
+
+    if use_tune:
+        config = kwargs['config']
+    else:
+        config = kwargs
+
     level_set = mouse.segmentation.eroded_level_set_generator(config["flood_threshold"])
 
     boxes = mouse.segmentation.find_USVs(
@@ -92,7 +103,8 @@ def _test_gac_config(
         else:
             raise ValueError(f"`metric` should be one of "
                              f"{[v for v in Metric]} but found {metric}")
-
+    if not use_tune:
+        return score
     tune.report(
         score=score,
         precision=precision,
@@ -114,8 +126,9 @@ def optimise_gac(
     threshold_metric: float,
     beta: Optional[float],
     callbacks: Optional[Sequence[tune.Callback]],
+    use_ray: bool = True,
     remove_ray_results: bool = True,
-) -> tune.ExperimentAnalysis:
+) -> Union[tune.ExperimentAnalysis, None]:
     """Search for best GAC parameters with tune.
 
     Parameters
@@ -152,39 +165,88 @@ def optimise_gac(
     callbacks: Optional[Sequence[tune.Callback]]
         Callbacks called after every test.
 
+    use_ray: bool
+        Specifies whether optimisation should use ray. This needs to be False only when
+        the app is packaged with PyInstaller.
+
     remove_ray_results: bool
         Specifies whether optimisation results will be deleted from disk. Should be
         `False` if many optimisation instances are executed.
 
     Returns
     -------
-    tune.ExperimentAnalysis
-        Optimisation result.
+    Union[tune.ExperimentAnalysis, None]
+        Optimisation result is returned when `use_ray` is True.
     """
-    analysis = tune.run(
-        tune.with_parameters(
-            _test_gac_config,
-            spec=spec,
-            ground_truth=ground_truth,
-            beta=beta,
-            alpha=alpha,
-            metric=metric,
-            threshold_metric=threshold_metric,
-        ),
-        config=GAC_SEARCH_SPACE,
-        verbose=0,
-        metric="score",
-        mode="max",
-        callbacks=callbacks,
-        search_alg=ConcurrencyLimiter(
-            BayesOptSearch(random_search_steps=random_search_steps),
-            max_concurrent=max_concurrent,
-        ),
-        num_samples=num_samples,
-        local_dir=tempfile.gettempdir(),
-        name="mouse/GAC_optimisation",
+    _test_gac_config_with_parameters = partial(
+        _test_gac_config,
+        spec=spec,
+        ground_truth=ground_truth,
+        beta=beta,
+        alpha=alpha,
+        metric=metric,
+        threshold_metric=threshold_metric,
     )
-    if remove_ray_results:
+    if use_ray:
+        analysis = tune.run(
+            tune.with_parameters(
+                _test_gac_config,
+                spec=spec,
+                ground_truth=ground_truth,
+                beta=beta,
+                alpha=alpha,
+                metric=metric,
+                threshold_metric=threshold_metric,
+            ),
+            config=GAC_SEARCH_SPACE_TUNE,
+            verbose=0,
+            metric="score",
+            mode="max",
+            callbacks=callbacks,
+            search_alg=ConcurrencyLimiter(
+                BayesOptSearch(random_search_steps=random_search_steps),
+                max_concurrent=max_concurrent,
+            ),
+            num_samples=num_samples,
+            local_dir=tempfile.gettempdir(),
+            name="mouse/GAC_optimisation",
+        )
+    else:
+        import bayes_opt
+        optimizer = bayes_opt.BayesianOptimization(
+            f=_test_gac_config_with_parameters,
+            pbounds=GAC_SEARCH_SPACE,
+        )
+
+        def _optimisation_callback(event, instance: bayes_opt.BayesianOptimization):
+            result: Dict[str, Union[dict, float]] = defaultdict(lambda: dict())
+
+            result["score"] = instance.space.target[-1]
+            result["precision"] = 0
+            result["recall"] = 0
+            result["box_count"] = 0
+            for name, value in zip(instance.space.keys, instance.space.params[-1]):
+                result["config"][name] = value
+
+            for callback in callbacks:
+                callback.on_trial_result(iteration=None,
+                                         trials=None,
+                                         trial=None,
+                                         result=result)
+
+        optimizer.subscribe(
+            event=bayes_opt.Events.OPTIMIZATION_STEP,
+            subscriber="_optimisation_callback",
+            callback=_optimisation_callback,
+        )
+        optimizer.maximize(
+            init_points=random_search_steps,
+            n_iter=num_samples - random_search_steps,
+        )
+
+    if use_ray and remove_ray_results:
         shutil.rmtree(Path(tempfile.gettempdir()).joinpath("mouse"))
 
-    return analysis
+    if use_ray:
+        return analysis
+    return None
