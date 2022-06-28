@@ -511,7 +511,6 @@ def main(
         if len(boxes_noise) > 0:
             warnings.warn(f"{len(boxes_noise)} USVs present in the noise area!!! "
                           f"Change script to overwrite default behavior")
-            # continue
 
         if not optimisation_ready:
             optimise(
