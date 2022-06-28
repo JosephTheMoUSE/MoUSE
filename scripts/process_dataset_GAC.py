@@ -577,7 +577,7 @@ if __name__ == "__main__":
 
     folders = sorted(data_util.load_data(source_folders, with_labels=True), key=lambda x: x.folder_path)
     l = len(folders)
-    chunk = l // args.chunk_count
+    chunk = (l + args.chunk_count - 1) // args.chunk_count
     folders = folders[chunk*args.chunk_num:chunk*(args.chunk_num+1)]
     #data_folder: data_util.DataFolder = folders[0]
 
