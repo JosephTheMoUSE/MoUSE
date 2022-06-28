@@ -103,12 +103,19 @@ class USVClassifier(pl.LightningModule):
                                      path=None,
                                      inference_only=inference_only)
 
-        if self.hparams.add_pos_embeddings:
-            self.cls = nn.Linear(in_features=self.backbone.out_channels + 4,
-                                 out_features=self.hparams.num_classes)
-        else:
-            self.cls = nn.Linear(in_features=self.backbone.out_channels,
-                                 out_features=self.hparams.num_classes)
+        self.cls = nn.Sequential()
+        prev_layers = self.backbone.out_channels + 4 if self.hparams.add_pos_embeddings else 0
+        for i, layer_dim in enumerate(self.hparams.cls_layer_dims):
+            self.cls.add_module(
+                f'cls_head_{i}',
+                nn.Linear(in_features=prev_layers, out_features=layer_dim))
+
+            self.cls.add_module(f'cls_relu_{i}', nn.ReLU())
+            prev_layers = layer_dim
+
+        self.cls.add_module(
+            f'cls_head_final',
+            nn.Linear(in_features=prev_layers, out_features=self.hparams.num_classes))
 
     def forward(self, specs, boxes=None) -> Tensor:
         """Modules forward propagation method."""
