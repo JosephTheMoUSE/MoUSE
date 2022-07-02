@@ -4,8 +4,7 @@ import argparse
 import json
 import pathlib
 from functools import partial
-from typing import Any
-from typing import Dict, List
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 import numpy as np
@@ -56,6 +55,18 @@ NUM_NOISE_CONFIGURATIONS = 3
 
 
 def load_noises(recording_name: str) -> List[SignalNoise]:
+    """Load noise from .json file.
+
+    Parameters
+    ----------
+    recording_name: str
+        Name of recording file.
+
+    Returns
+    -------
+    List[SignalNoise]
+        List of noise sample configurations in SignalNoise object.
+    """
     with NOISES.joinpath(recording_name).open("r") as fp:
         noise_times: Dict[str, dict] = json.load(fp)
 
@@ -69,6 +80,20 @@ def load_noises(recording_name: str) -> List[SignalNoise]:
 
 
 def load_gac_config(recording_name: str, config_id: str):
+    """Load GAC configuration from .json file.
+
+    Parameters
+    ----------
+    recording_name: str
+        Name of recording file.
+    config_id: str
+        GAC configuration identifier.
+
+    Returns
+    -------
+    dict
+        Configuration of GAC algorithm.
+    """
     with OPTIMISATION_FINAL_RESULTS.joinpath(recording_name).open("r") as fp:
         configs: Dict[str, dict] = json.load(fp)
 
@@ -78,6 +103,22 @@ def load_gac_config(recording_name: str, config_id: str):
 def is_configuration_present(
         target_folder: pathlib.Path, recording_name: str, config_id: str
 ) -> bool:
+    """Check if configuration file and specific configuration identifier are already present in target folder.
+
+    Parameters
+    ----------
+    target_folder: pathlib.Path
+        Path to json formatted file with configurations.
+    recording_name: str
+        Name of recording file.
+    config_id: str
+        Configuration identifier.
+
+    Returns
+    -------
+    bool
+        True if file and configuration are present, False otherwise.
+    """
     result_path = target_folder.joinpath(recording_name)
 
     if not result_path.exists():
@@ -163,6 +204,20 @@ def find_noises_in_recording(data_folder: data_util.DataFolder, recording_name: 
 def prepare_spec(
         squeak_signal: sound_util.SignalData, noise: SignalNoise
 ) -> sound_util.SpectrogramData:
+    """Preprocess spectrogram with Noise gate filter with noise configuration.
+
+    Parameters
+    ----------
+    squeak_signal: sound_util.SignalData
+        Signal to be processed.
+    noise: SignalNoise
+        Noise configuration.
+
+    Returns
+    -------
+    sound_util.SpectrogramData
+        Processed spectrogram from specified signal and noise configuration.
+    """
     spec: sound_util.SpectrogramData = sound_util.signal_spectrogram(
         squeak_signal,
         start=0.0,
@@ -239,6 +294,23 @@ def save_best_configuration(
         recording_name: str,
         time_end: float,
 ):
+    """Save best configuration from experiment.
+
+    Parameters
+    ----------
+    analysis: tune.ExperimentAnalysis.
+        Ray hyperparameter sweep results.
+    train_boxes_count: int
+        Number of training boxes used.
+    config_id: str
+        Configuration identifier.
+    beta: float
+        Parameter F_`beta` used as optimization metric.
+    recording_name: str
+        Name of recording file.
+    time_end: flaot
+        Recording length in seconds used to optimize parameters.
+    """
     balloon = balloon_from_latent(analysis.best_config["_balloon_latent"])
     threshold = threshold_from_latent(analysis.best_config["_balloon_latent"])
     result_path = OPTIMISATION_FINAL_RESULTS.joinpath(recording_name)
@@ -263,10 +335,31 @@ def save_best_configuration(
         json.dump(result, fp, indent=0)
 
 
-def extract_train_data(spec,
-                       max_time,
-                       boxes):
+def extract_train_data(spec: sound_util.SpectrogramData,
+                       max_time: float,
+                       boxes: List[data_util.SqueakBox]
+                       ) -> Tuple[sound_util.SpectrogramData, List[data_util.SqueakBox], float]:
+    """Heuristically find the best Spectrogram chunk for hyperparameter optimization.
 
+    Algorithm finds spectrogram chunk with maximal number of annotations present,
+    considering upper length limit of `max_time`.
+
+    Parameters
+    ----------
+    spec: sound_util.SpectrogramData
+        Spectrogram data thet correspond to `boxes` annotations.
+    max_time: float
+        Max length of training chunk in seconds.
+    boxes: List[data_util.SqueakBox]
+        List of annotations for `spec`.
+
+    Returns
+    -------
+    Tuple[sound_util.SpectrogramData, List[data_util.SqueakBox], float]
+        Spectrogram chunk for hyperparameter optimization,
+        Clipped annotation that correspond to spectrogram chunk,
+        Length of chunk in seconds.
+    """
     if len(boxes) == 0:
         return *data_util.clip_spec_and_boxes(spec, boxes, t_end=max_time/2), max_time/2
 
@@ -330,6 +423,27 @@ def optimise(
         spec,
         max_train_time,
 ):
+    """Optimize hyperparameters for GAC.
+
+    Parameters
+    ----------
+    beta:
+        Beta for F optimization metric.
+    ground_truth: List[data_util.SqueakBox
+        Ground truth annotations that correspond to `spec`.
+    config_id: str
+        Configuration identifier.
+    num_samples: int
+        Number of overall samples.
+    random_search_steps: int
+        Number of random search steps.
+    recording_name: str
+        Name of recording file.
+    spec: signal_util.SpectrogramData
+        Spectrogram to extract training data.
+    max_train_time: float
+        Time limit for training data.
+    """
     spec_train, ground_truth_train, train_time = extract_train_data(
         spec=spec, max_time=max_train_time, boxes=ground_truth
     )
@@ -378,6 +492,25 @@ def detect_and_process_detections(
         save_metrics: bool,
         beta: float,
 ):
+    """Run detection and calculate metrics on `spec` on selected parameters.
+
+    Parameters
+    ----------
+    ground_truth: List[data_util.SqueakBox
+        Ground truth annotations that correspond to `spec`.
+    config_id: str
+        Configuration identifier.
+    recording_name: str
+        Name of recording file.
+    spec: signal_util.SpectrogramData
+        Spectrogram to extract training data.
+    train_time: float
+        Time limit for training data.
+    save_metrics: bool
+        Whether to save calculated metrics.
+    beta:
+        Beta for F metric.
+    """
     config = load_gac_config(recording_name=recording_name, config_id=config_id)
     level_set = mouse.segmentation.eroded_level_set_generator(
         round(config["flood_threshold"], 3)
@@ -411,6 +544,7 @@ def detect_and_process_detections(
         json.dump(result, fp, indent=0)
 
     if save_metrics:
+        # TODO: look through this part.
         print(f"Calculating metrics")
         spec_test, test_gt = data_util.clip_spec_and_boxes(
             spec=spec, t_start=train_time, boxes=ground_truth
@@ -466,6 +600,27 @@ def main(
         save_metrics: bool,
         detect: bool
 ):
+    """Run main function that processes recording.
+
+    Parameters
+    ---------
+    data_folder: data_util.DataFolder
+        DataFolder object that represent experiment recordings.
+    recording_name: str
+        Recording file to be processed.
+    train_time: float
+        Max time limit for spectrogram chunk for optimization.
+    beta: float
+        Beta for F optimization metric.
+    random_search_steps: int
+        Number random optimization steps.
+    num_samples: int
+        Number of overall optimization steps.
+    save_metrics: bool
+        Whether to save metrics for detection after optimization.
+    detect: bool
+        Whether to run detection.
+    """
     if not NOISES.joinpath(recording_name).exists():
         find_noises_in_recording(data_folder, recording_name)
 
