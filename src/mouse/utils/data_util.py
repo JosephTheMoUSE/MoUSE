@@ -1,10 +1,12 @@
 """Module containing utilities for loading and processing sound data."""
 from __future__ import annotations
 
+import time
 import pathlib
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Union, Dict
+import requests
 
 import numpy as np
 import pandas as pd
@@ -606,3 +608,21 @@ def find_bounding_boxes(mask: np.ndarray, min_side_length: int = 1) -> List[Sque
                     label=None,
                 ))
     return result
+
+
+def download_file(url, output_path):
+    file_content = requests.get(url)
+    for retry_timeout in [1, 30, 30]:
+        try:
+            file_content.raise_for_status()
+            break
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code in [429, 500, 502, 503, 504]:
+                time.sleep(retry_timeout)
+                file_content = requests.get(url)
+                continue
+            raise
+    file_content.raise_for_status()
+
+    with open(output_path, 'wb') as f:
+        f.write(file_content.content)
