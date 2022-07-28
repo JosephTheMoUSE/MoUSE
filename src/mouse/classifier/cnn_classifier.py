@@ -4,7 +4,6 @@ from typing import Tuple, List, Optional, Callable
 from copy import deepcopy as copy
 
 import os
-import gdown
 from pathlib import Path
 import numpy as np
 import pytorch_lightning as pl
@@ -13,14 +12,14 @@ from torch import nn, Tensor
 import torch.nn.functional as F
 from tqdm import tqdm
 
-from mouse.utils.data_util import SqueakBox
+from mouse.utils.data_util import SqueakBox, download_file
 from mouse.utils.sound_util import SpectrogramData
 from mouse.utils.modeling_utils import get_backbone
 
 PRETRAINED_MODELS_CHECKPOINTS = {
     "cnn-binary-v1-custom": {
         "url":
-            "https://drive.google.com/uc?id=1XhAyU6aFJoWZn8pxI-N9BRnpUTGMjp4Z",  # noqa
+            "https://zenodo.org/record/6868406/files/cnn_binary_v1_custom.ckpt",  # noqa
         "filename": "cnn_binary_v1_custom.ckpt",
     }
 }
@@ -69,8 +68,8 @@ def classify_USVs(
         PRETRAINED_MODELS_CHECKPOINTS[model_name]["filename"])
     if not model_path.exists():
         os.makedirs(str(cache_dir), exist_ok=True)
-        gdown.download(PRETRAINED_MODELS_CHECKPOINTS[model_name]["url"],
-                       output=str(model_path))
+        download_file(PRETRAINED_MODELS_CHECKPOINTS[model_name]["url"],
+                      output_path=str(model_path))
 
     model = USVClassifier.load_from_checkpoint(str(model_path), inference_only=True)
     return model.predict_for_annotations(
