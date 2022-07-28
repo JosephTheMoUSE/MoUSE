@@ -4,7 +4,6 @@ from argparse import Namespace
 from pathlib import Path
 from typing import List, Dict, Optional, Union, Callable, Iterable
 
-import gdown
 import numpy as np
 import pytorch_lightning as pl
 import torch
@@ -25,8 +24,7 @@ from mouse.utils.modeling_utils import get_backbone, Normalize
 
 PRETRAINED_MODELS_CHECKPOINTS = {
     "f-rcnn-custom": {
-        "url":
-            "https://zenodo.org/record/6868406/files/test_rcnn.ckpt",  # noqa
+        "url": "https://zenodo.org/record/6868406/files/test_rcnn.ckpt",  # noqa
         "filename": "test_rcnn.ckpt",
     }
 }
