@@ -610,7 +610,16 @@ def find_bounding_boxes(mask: np.ndarray, min_side_length: int = 1) -> List[Sque
     return result
 
 
-def download_file(url, output_path):
+def download_file(url: str, output_path: str):
+    """Download file from specified url.
+
+    Parameters
+    ----------
+    url : str
+        Link to file.
+    output_path : str
+        Path under which to save the file pointed by `url`
+    """
     file_content = requests.get(url)
     for retry_timeout in [1, 30, 30]:
         try:
