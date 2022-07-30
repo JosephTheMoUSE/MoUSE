@@ -479,7 +479,7 @@ def merge_boxes(
                 freq_end=max(freq_ends),
                 t_start=min(time_starts),
                 t_end=max(time_ends),
-                label=str(label),
+                label=str(label) if label else None,
             ))
         if scores is not None:
             s = aggregated_scores[key]
