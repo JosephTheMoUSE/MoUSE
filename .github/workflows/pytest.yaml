@@ -22,6 +22,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
           sudo apt-get install libsndfile1
-          pip install soundfile imutils
+          pip install soundfile imutils skimage
       - name: Run pytest
         run: python -m pytest -v tests
