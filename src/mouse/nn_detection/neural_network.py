@@ -4,7 +4,6 @@ from argparse import Namespace
 from pathlib import Path
 from typing import List, Dict, Optional, Union, Callable, Iterable
 
-import gdown
 import numpy as np
 import pytorch_lightning as pl
 import torch
@@ -19,14 +18,13 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import MultiScaleRoIAlign
 from tqdm import tqdm
 
-from mouse.utils.data_util import merge_boxes, SqueakBox
+from mouse.utils.data_util import merge_boxes, SqueakBox, download_file
 from mouse.utils.sound_util import SpectrogramData
 from mouse.utils.modeling_utils import get_backbone, Normalize
 
 PRETRAINED_MODELS_CHECKPOINTS = {
     "f-rcnn-custom": {
-        "url":
-            "https://drive.google.com/uc?id=15MM-Qq_KeDLET20aLmrika4qakLTyXOB",  # noqa
+        "url": "https://zenodo.org/record/6868406/files/test_rcnn.ckpt",  # noqa
         "filename": "test_rcnn.ckpt",
     }
 }
@@ -72,8 +70,8 @@ def find_USVs(
         PRETRAINED_MODELS_CHECKPOINTS[model_name]["filename"])
     if not model_path.exists():
         os.makedirs(str(cache_dir), exist_ok=True)
-        gdown.download(PRETRAINED_MODELS_CHECKPOINTS[model_name]["url"],
-                       output=str(model_path))
+        download_file(PRETRAINED_MODELS_CHECKPOINTS[model_name]["url"],
+                      output_path=str(model_path))
 
     model = USVDetector.load_from_checkpoint(str(model_path), inference_only=True)
     return model.predict_for_spectrogram_data(
