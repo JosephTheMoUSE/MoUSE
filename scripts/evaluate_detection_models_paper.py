@@ -127,7 +127,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--test_data_dir', default='./test/')
     parser.add_argument('--nn_model', default='f-rcnn-custom')
-    parser.add_argument('--model_thresholds', nargs='+', type=float, default=[-1])
+    parser.add_argument('--model_thresholds', nargs='+', type=float, default=[0., 0.3, 0.5, 0.7])
     parser.add_argument('--calculate_roc', action='store_true')  # todo
     args = parser.parse_args()
 
@@ -143,11 +143,10 @@ if __name__ == '__main__':
     #audio_files = annotations.begin_file.unique()
     audio_files = ['ch1-2020-11-23_13-01-52_0000013.wav',
                    'ch1-2020-11-23_13-05-52_0000017.wav',
-                   #'ch1-2020-11-26_12-40-23_0000001.wav',
-                   #'ch1-2020-11-20_11-43-10_0000006.wav',
-                   #'ch1-2020-11-23_12-48-55_0000001.wav',
-                   #'ch1-2020-11-24_10-53-15_0000005.wav'
-                   ]
+                   'ch1-2020-11-26_12-40-23_0000001.wav',
+                   'ch1-2020-11-20_11-43-10_0000006.wav',
+                   'ch1-2020-11-23_12-48-55_0000001.wav',
+                   'ch1-2020-11-24_10-53-15_0000005.wav']
     audio_files = sorted(audio_files)
 
     annotations.usv_type = annotations.usv_type.map(_clean_labels)
@@ -275,7 +274,6 @@ if __name__ == '__main__':
              'filter_18': True
              }
         ]
-        param_sets = param_sets[:1]
 
         nn_model_preds = eval_nn_detection(spec=spec,
                                            model_name=args.nn_model,
