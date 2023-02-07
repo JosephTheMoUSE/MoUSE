@@ -299,13 +299,15 @@ class USVDetector(pl.LightningModule):
             predicted_boxes.extend(predicted_label_boxes)
         return predicted_boxes
 
-    def predict_for_spectrogram_data(self,
-                                     spec_data: SpectrogramData,
-                                     batch_size: Optional[int] = None,
-                                     confidence_threshold: float = -1,
-                                     silent: bool = False,
-                                     callback: Optional[Callable] = None,
-                                     tqdm_kwargs=None) -> List[SqueakBox]:
+    def predict_for_spectrogram_data(
+        self,
+        spec_data: SpectrogramData,
+        batch_size: Optional[int] = None,
+        confidence_threshold: float = -1,
+        silent: bool = False,
+        callback: Optional[Callable] = None,
+        tqdm_kwargs=None
+    ) -> List[SqueakBox]:
         """Use to produce and process model predictions.
 
         Parameters

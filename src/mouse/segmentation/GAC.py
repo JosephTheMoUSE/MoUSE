@@ -123,9 +123,7 @@ def find_USVs(spec: sound_util.SpectrogramData,
     tqdm_kwargs = tqdm_kwargs if tqdm_kwargs else {}
     with tqdm(total=_kwargs["iterations"], **tqdm_kwargs) as pbar:
         level_set_result = segmentation.morphological_geodesic_active_contour(
-            _spec,
-            init_level_set=level_set_init,
-            iter_callback=lambda x: pbar.update(1),
+            _spec, init_level_set=level_set_init, iter_callback=lambda x: pbar.update(1),
             **_kwargs)
 
     boxes = data_util.find_bounding_boxes(level_set_result,
