@@ -32,16 +32,14 @@ PRETRAINED_MODELS_CHECKPOINTS = {
 }
 
 
-def find_USVs(
-    spec_data: SpectrogramData,
-    model_name: str,
-    cache_dir: Path,
-    batch_size: int,
-    confidence_threshold: float = -1,
-    silent: bool = False,
-    callback: Optional[Callable] = None,
-    tqdm_kwargs: Optional[Dict] = None
-):
+def find_USVs(spec_data: SpectrogramData,
+              model_name: str,
+              cache_dir: Path,
+              batch_size: int,
+              confidence_threshold: float = -1,
+              silent: bool = False,
+              callback: Optional[Callable] = None,
+              tqdm_kwargs: Optional[Dict] = None):
     """Load and produce predictions for spectrogram data.
 
     Parameters
@@ -77,14 +75,12 @@ def find_USVs(
                        output=str(model_path))
 
     model = USVDetector.load_from_checkpoint(str(model_path), inference_only=True)
-    return model.predict_for_spectrogram_data(
-        spec_data,
-        batch_size=batch_size,
-        confidence_threshold=confidence_threshold,
-        silent=silent,
-        callback=callback,
-        tqdm_kwargs=tqdm_kwargs
-    )
+    return model.predict_for_spectrogram_data(spec_data,
+                                              batch_size=batch_size,
+                                              confidence_threshold=confidence_threshold,
+                                              silent=silent,
+                                              callback=callback,
+                                              tqdm_kwargs=tqdm_kwargs)
 
 
 def _preprocess_spec(spec, freqs, use_log, clip_18khz, gamma):
@@ -305,15 +301,13 @@ class USVDetector(pl.LightningModule):
             predicted_boxes.extend(predicted_label_boxes)
         return predicted_boxes
 
-    def predict_for_spectrogram_data(
-        self,
-        spec_data: SpectrogramData,
-        batch_size: Optional[int] = None,
-        confidence_threshold: float = -1,
-        silent: bool = False,
-        callback: Optional[Callable] = None,
-        tqdm_kwargs=None
-    ) -> List[SqueakBox]:
+    def predict_for_spectrogram_data(self,
+                                     spec_data: SpectrogramData,
+                                     batch_size: Optional[int] = None,
+                                     confidence_threshold: float = -1,
+                                     silent: bool = False,
+                                     callback: Optional[Callable] = None,
+                                     tqdm_kwargs=None) -> List[SqueakBox]:
         """Use to produce and process model predictions.
 
         Parameters
