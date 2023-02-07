@@ -1,0 +1,17 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y software-properties-common curl python3-dev python3-pip python-is-python3 libb64-dev wget git wkhtmltopdf libsndfile1-dev && \
+    apt-get clean
+
+WORKDIR /workspace
+#ENV PYTHONPATH /workspace
+
+ADD requirements.txt /workspace/requirements.txt
+RUN pip install -r /workspace/requirements.txt
+
+ADD . /workspace
+RUN pip install /workspace
+
+CMD [ "python" , "./scripts/evaluate_detection_models_paper.py" ]

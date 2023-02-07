@@ -1,10 +1,11 @@
 """Module implementing GAC USVs search."""
 from functools import partial
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Dict
 import copy
 
 import numpy as np
 from skimage import segmentation, morphology
+from tqdm import tqdm
 
 from mouse.utils import data_util
 from mouse.utils import sound_util
@@ -74,6 +75,7 @@ def find_USVs(spec: sound_util.SpectrogramData,
               filter=True,
               preprocessing_fn: Optional[Callable] = None,
               level_set: Callable = ones_level_set,
+              tqdm_kwargs: Optional[Dict] = None,
               **kwargs) -> List[data_util.SqueakBox]:
     """Find USVs on spectrogram `spec` using GAC.
 
@@ -118,8 +120,10 @@ def find_USVs(spec: sound_util.SpectrogramData,
 
     level_set_init = level_set(_spec)
 
-    level_set_result = segmentation.morphological_geodesic_active_contour(
-        _spec, init_level_set=level_set_init, **_kwargs)
+    tqdm_kwargs = tqdm_kwargs if tqdm_kwargs else {}
+    with tqdm(total=_kwargs["iterations"], **tqdm_kwargs) as pbar:
+        level_set_result = segmentation.morphological_geodesic_active_contour(
+            _spec, init_level_set=level_set_init, iter_callback=lambda x: pbar.update(1), **_kwargs)
 
     boxes = data_util.find_bounding_boxes(level_set_result,
                                           min_side_length=min_side_length)

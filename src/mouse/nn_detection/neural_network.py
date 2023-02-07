@@ -40,6 +40,7 @@ def find_USVs(
     confidence_threshold: float = -1,
     silent: bool = False,
     callback: Optional[Callable] = None,
+    tqdm_kwargs: Optional[Dict] = None
 ):
     """Load and produce predictions for spectrogram data.
 
@@ -82,6 +83,7 @@ def find_USVs(
         confidence_threshold=confidence_threshold,
         silent=silent,
         callback=callback,
+        tqdm_kwargs=tqdm_kwargs
     )
 
 
@@ -310,6 +312,7 @@ class USVDetector(pl.LightningModule):
         confidence_threshold: float = -1,
         silent: bool = False,
         callback: Optional[Callable] = None,
+        tqdm_kwargs=None
     ) -> List[SqueakBox]:
         """Use to produce and process model predictions.
 
@@ -365,9 +368,10 @@ class USVDetector(pl.LightningModule):
         dataloader = DataLoader(chunks, batch_size=batch_size)
         self.model.eval()
         all_preds = []
+        tqdm_kwargs = tqdm_kwargs if tqdm_kwargs else {}
 
         with torch.no_grad():
-            for idx, batch in enumerate(tqdm(dataloader, disable=silent)):
+            for idx, batch in enumerate(tqdm(dataloader, disable=silent, **tqdm_kwargs)):
                 preds = self.model(batch)
                 all_preds.extend(preds)
                 if callback:

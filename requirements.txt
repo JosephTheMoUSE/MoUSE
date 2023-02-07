@@ -6,11 +6,13 @@ numpy==1.20.0
 matplotlib
 opencv-python
 pandas==1.1.0
-scipy
-scikit-image
+scikit-image==0.18.3
+scikit-learn==1.0
+scipy==1.7.1
 pytorch_lightning
 gdown
 rtree
 environ-config
-ray
+ray[tune]==1.12.0
+protobuf==3.20.0
 bayesian-optimization
