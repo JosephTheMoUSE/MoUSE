@@ -37,8 +37,7 @@ def find_USVs(spec_data: SpectrogramData,
               confidence_threshold: float = -1,
               silent: bool = False,
               callback: Optional[Callable] = None,
-              tqdm_kwargs: Optional[Dict] = None
-):
+              tqdm_kwargs: Optional[Dict] = None):
     """Load and produce predictions for spectrogram data.
 
     Parameters
@@ -79,8 +78,7 @@ def find_USVs(spec_data: SpectrogramData,
                                               confidence_threshold=confidence_threshold,
                                               silent=silent,
                                               callback=callback,
-                                              tqdm_kwargs=tqdm_kwargs
-    )
+                                              tqdm_kwargs=tqdm_kwargs)
 
 
 def _preprocess_spec(spec, freqs, use_log, clip_18khz, gamma):
@@ -307,8 +305,7 @@ class USVDetector(pl.LightningModule):
                                      confidence_threshold: float = -1,
                                      silent: bool = False,
                                      callback: Optional[Callable] = None,
-                                     tqdm_kwargs=None
-    ) -> List[SqueakBox]:
+                                     tqdm_kwargs=None) -> List[SqueakBox]:
         """Use to produce and process model predictions.
 
         Parameters
