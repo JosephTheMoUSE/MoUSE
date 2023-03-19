@@ -70,8 +70,9 @@ def eval_gac_detection(spec, param_sets):
         else:
             s = spec
         preds = find_USVs_gac(s, tqdm_kwargs=dict(position=1, leave=False, desc=f'GAC-{idx}'), **params)
+        preds = [p for p in preds if (p.freq_end - p.freq_start) > 200]
         if filter_18:
-            preds = [p for p in preds if p if (p.freq_end - p.freq_start) / 2 >= spec.freq_to_pixels(18000)]
+            preds = [p for p in preds if (p.freq_end + p.freq_start) / 2 >= spec.freq_to_pixels(18000)]
         res[f'GAC-{idx}'] = preds
     return res
 
@@ -358,5 +359,3 @@ if __name__ == '__main__':
 
     print(accs)
     accs.to_csv('results/accuracy.csv')
-
-
