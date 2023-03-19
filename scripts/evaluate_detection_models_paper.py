@@ -10,16 +10,26 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+import seaborn as sns
 import glob
 import re
 import torchaudio
 from skimage import segmentation
+from sklearn.metrics import confusion_matrix, accuracy_score
+import matplotlib.pyplot as plt
 
 from mouse.nn_detection.neural_network import find_USVs as find_USVs_nn
 from mouse.segmentation.GAC import find_USVs as find_USVs_gac, eroded_level_set_generator
 from mouse.utils.sound_util import spectrogram as generate_spectrogram, SpectrogramData, clip_spectrogram
 from mouse.utils.data_util import load_table, SqueakBox
-from mouse.utils.metrics import intersection_over_union_global, detection_precision, detection_recall, f_beta, coverage
+from mouse.utils.metrics import (
+    intersection_over_union_global,
+    detection_precision,
+    detection_recall,
+    f_beta,
+    coverage,
+    intersection_over_union_elementwise
+)
 from mouse.denoising import noise_gate_filter
 from tqdm import tqdm
 from pathlib import Path
@@ -123,6 +133,17 @@ def denoise_spec(spec: SpectrogramData,
     return spec
 
 
+def iou_dict_to_class(iou_dict):
+    result = []
+    for (squeak, intersections) in iou_dict.items():
+        if len(intersections.values()) > 0:
+            idx = np.argmax(intersections.values())
+            result.append((squeak.label, list(intersections.keys())[idx].label))
+        else:
+            result.append((squeak.label, "noise"))
+    return result
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--test_data_dir', default='./test/')
@@ -153,6 +174,9 @@ if __name__ == '__main__':
 
     results = defaultdict(lambda: defaultdict(float))
     results_per_class = defaultdict(lambda: defaultdict(float))
+
+    y_true = defaultdict(list)
+    y_pred = defaultdict(list)
 
     for file in tqdm(audio_files, position=0):
 
@@ -297,6 +321,12 @@ if __name__ == '__main__':
                 for label, rc in rc_per_class.items():
                     results_per_class[m][f'{label}@{tr * 100}'] += rc * 100
 
+        for m, preds in nn_model_preds.items():
+            iou_elementwise = intersection_over_union_elementwise(preds, ground_truth)
+            hits = iou_dict_to_class(iou_elementwise)
+            y_true[m] += [h[1] for h in hits]
+            y_pred[m] += [h[0] for h in hits]
+
     res = pd.DataFrame(results)
     res /= len(audio_files)
     res_per_class = pd.DataFrame(results_per_class)
@@ -307,3 +337,26 @@ if __name__ == '__main__':
 
     print('Results per class')
     print(res_per_class)
+
+    os.makedirs('results', exist_ok=True)
+    res.to_csv('results/results.csv')
+    res_per_class.to_csv('results/results_per_class.csv')
+
+    accs = {}
+    labels = ["tr", "oc", "mc", "sh", "fl", "trc", "22khz"]
+    for m in y_pred:
+        cf_matrix = confusion_matrix(y_true[m], y_pred[m], labels=labels)
+        cf_matrix = pd.DataFrame(cf_matrix, index=labels, columns=labels)
+        accs[m] = {'accuracy': accuracy_score(y_true[m], y_pred[m]) * 100}
+        fig, ax = plt.subplots(figsize=(12, 10))
+        sns.heatmap(cf_matrix, linewidths=1, annot=True, ax=ax, fmt='g', cmap="Blues")
+        plt.ylabel('True label')
+        plt.xlabel('Predicted label')
+        plt.savefig(f'results/cf_matrix_{m}.png')
+
+    accs = pd.DataFrame(accs)
+
+    print(accs)
+    accs.to_csv('results/accuracy.csv')
+
+
