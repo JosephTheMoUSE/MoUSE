@@ -65,11 +65,12 @@ def eval_gac_detection(spec, param_sets):
     for idx, params in enumerate(param_sets, 1):
         filter_18 = params['filter_18']
         del params['filter_18']
+
+        s = deepcopy(spec)
         if 'denoise_fn' in params:
-            s = params['denoise_fn'](spec)
+            s = params['denoise_fn'](s)
             del params['denoise_fn']
-        else:
-            s = spec
+
         preds = find_USVs_gac(s,
                               tqdm_kwargs=dict(position=1,
                                                leave=False,
@@ -101,10 +102,13 @@ def denoise_spec(
     spec = deepcopy(spec)
     spans = []
     boxes = sorted(boxes, key=lambda b: b.t_start)
+    t_spec_end = spec.time_to_pixels(spec.t_end)
+    boxes.append(SqueakBox(freq_start=0, freq_end=0, t_start=t_spec_end, t_end=t_spec_end))
+
     current_end = 0
     min_noise_sample_len = spec.time_to_pixels(noise_len)
     for box in boxes:
-        d = current_end - box.t_start
+        d = box.t_start - current_end
         if d >= min_noise_sample_len:
             spans.append([current_end, box.t_start])
             current_end = box.t_end
@@ -115,22 +119,20 @@ def denoise_spec(
     if spans:
         try:
             weights = np.array([
-                np.mean(np.quantile(spec.spec[:, s:e], 0.75, axis=1)) for s,
-                e in spans if e - s > 1
+                np.mean(np.quantile(spec.spec[:, s:e], 0.75, axis=1))
+                for s, e in spans if e - s > 1
             ])
             span = spans[np.random.choice(len(spans), p=weights / np.sum(weights))]
         except:
             span = [0, spec.times.shape[0] - 1]
-            noise_decrease = noise_decrease / 2
             warnings.warn(
                 f"Error occurred while searching for noise. For file {file}\n"
-                "Span will be chosen randomly. Decreasing `noise_decrease` by half")
+                "Span will be chosen randomly.")
     else:
         span = [0, spec.times.shape[0] - 1]
-        noise_decrease = noise_decrease / 2
         warnings.warn(
             f"Can't find sufficiently long span without calls. For file {file}\n"
-            "Span will be chosen randomly. Decreasing `noise_decrease` by half")
+            "Span will be chosen randomly.")
 
     if span[1] - span[0] > min_noise_sample_len:
         span[0] = np.random.randint(span[0], span[1] - min_noise_sample_len + 1)
@@ -232,19 +234,20 @@ if __name__ == '__main__':
                                label=cls)
             ground_truth.append(gt_box)
 
-        param_sets = [{
+        param_sets = [
+        {
             'preprocessing_fn':
                 partial(
                     segmentation.inverse_gaussian_gradient,
                     sigma=7.0,
-                    alpha=200.0,
+                    alpha=50.0,
                 ),
             'level_set':
-                eroded_level_set_generator(threshold=0.75),
+                eroded_level_set_generator(threshold=0.9),
             'balloon':
                 -1,
             'threshold':
-                0.8,
+                0.9,
             'smoothing':
                 3,
             'iterations':
@@ -252,142 +255,96 @@ if __name__ == '__main__':
             'filter_18':
                 False
         },
-                      {
-                          'preprocessing_fn':
-                              partial(
-                                  segmentation.inverse_gaussian_gradient,
-                                  sigma=7.0,
-                                  alpha=200.0,
-                              ),
-                          'level_set':
-                              eroded_level_set_generator(threshold=0.75),
-                          'balloon':
-                              -1,
-                          'threshold':
-                              0.8,
-                          'smoothing':
-                              3,
-                          'iterations':
-                              15,
-                          'filter_18':
-                              True
-                      },
-                      {
-                          'preprocessing_fn':
-                              partial(
-                                  segmentation.inverse_gaussian_gradient,
-                                  sigma=7.0,
-                                  alpha=200.0,
-                              ),
-                          'denoise_fn':
-                              partial(denoise_spec,
-                                      boxes=ground_truth,
-                                      file=file,
-                                      noise_len=1.0,
-                                      n_grad_freq=3,
-                                      n_grad_time=3,
-                                      n_std_thresh=1.0,
-                                      noise_decrease=0.5),
-                          'level_set':
-                              eroded_level_set_generator(threshold=0.75),
-                          'balloon':
-                              -1,
-                          'threshold':
-                              0.8,
-                          'smoothing':
-                              3,
-                          'iterations':
-                              15,
-                          'filter_18':
-                              False
-                      },
-                      {
-                          'preprocessing_fn':
-                              partial(
-                                  segmentation.inverse_gaussian_gradient,
-                                  sigma=7.0,
-                                  alpha=200.0,
-                              ),
-                          'denoise_fn':
-                              partial(denoise_spec,
-                                      boxes=ground_truth,
-                                      file=file,
-                                      noise_len=1.0,
-                                      n_grad_freq=3,
-                                      n_grad_time=3,
-                                      n_std_thresh=1.0,
-                                      noise_decrease=0.5),
-                          'level_set':
-                              eroded_level_set_generator(threshold=0.75),
-                          'balloon':
-                              -1,
-                          'threshold':
-                              0.8,
-                          'smoothing':
-                              3,
-                          'iterations':
-                              15,
-                          'filter_18':
-                              True
-                      },
-                      {
-                          'preprocessing_fn':
-                              partial(
-                                  segmentation.inverse_gaussian_gradient,
-                                  sigma=4.0,
-                                  alpha=200.0,
-                              ),
-                          'denoise_fn':
-                              partial(denoise_spec,
-                                      boxes=ground_truth,
-                                      file=file,
-                                      noise_len=1.0,
-                                      n_grad_freq=3,
-                                      n_grad_time=3,
-                                      n_std_thresh=1.0,
-                                      noise_decrease=0.5),
-                          'level_set':
-                              eroded_level_set_generator(threshold=0.8),
-                          'balloon':
-                              -1,
-                          'threshold':
-                              0.8,
-                          'smoothing':
-                              2,
-                          'iterations':
-                              15,
-                          'filter_18':
-                              False
-                      },
-                      {
-                          'preprocessing_fn':
-                              partial(
-                                  segmentation.inverse_gaussian_gradient,
-                                  sigma=4.0,
-                                  alpha=200.0,
-                              ),
-                          'denoise_fn':
-                              partial(denoise_spec,
-                                      boxes=ground_truth,
-                                      file=file,
-                                      noise_len=1.0,
-                                      n_grad_freq=3,
-                                      n_grad_time=3,
-                                      n_std_thresh=1.0,
-                                      noise_decrease=0.5),
-                          'level_set':
-                              eroded_level_set_generator(threshold=0.8),
-                          'balloon':
-                              -1,
-                          'threshold':
-                              0.8,
-                          'smoothing':
-                              2,
-                          'iterations':
-                              15,
-                          'filter_18':
-                              True
-                      }]
+        {
+            'preprocessing_fn':
+                partial(
+                    segmentation.inverse_gaussian_gradient,
+                    sigma=7.0,
+                    alpha=50.0,
+                ),
+            'level_set':
+                eroded_level_set_generator(threshold=0.9),
+            'balloon':
+                -1,
+            'threshold':
+                0.9,
+            'smoothing':
+                3,
+            'iterations':
+                15,
+            'filter_18':
+                True
+        },
+        {
+            'preprocessing_fn':
+                partial(
+                    segmentation.inverse_gaussian_gradient,
+                    sigma=10.0,
+                    alpha=500.0,
+                ),
+            'level_set':
+                eroded_level_set_generator(threshold=0.7),
+            'balloon':
+                -1,
+            'threshold':
+                0.7,
+            'smoothing':
+                3,
+            'iterations':
+                15,
+            'filter_18':
+                False
+        },
+        {
+            'preprocessing_fn':
+                partial(
+                    segmentation.inverse_gaussian_gradient,
+                    sigma=10.0,
+                    alpha=500.0,
+                ),
+            'level_set':
+                eroded_level_set_generator(threshold=0.7),
+            'balloon':
+                -1,
+            'threshold':
+                0.7,
+            'smoothing':
+                3,
+            'iterations':
+                15,
+            'filter_18':
+                True
+        },
+        {
+            'preprocessing_fn':
+                partial(
+                    segmentation.inverse_gaussian_gradient,
+                    sigma=10.0,
+                    alpha=500.0,
+                ),
+            'denoise_fn':
+                partial(denoise_spec,
+                        boxes=ground_truth,
+                        file=file,
+                        noise_len=0.3,
+                        n_grad_freq=3,
+                        n_grad_time=3,
+                        n_std_thresh=1.0,
+                        noise_decrease=0.3),
+            'level_set':
+                eroded_level_set_generator(threshold=0.7),
+            'balloon':
+                -1,
+            'threshold':
+                0.7,
+            'smoothing':
+                3,
+            'iterations':
+                15,
+            'filter_18':
+                True
+        },
+        ]
 
         nn_model_preds = eval_nn_detection(spec=spec,
                                            model_name=args.nn_model,
