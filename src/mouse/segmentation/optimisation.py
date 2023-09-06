@@ -42,6 +42,7 @@ def threshold_from_latent(balloon_latent: float) -> float:
 
 
 def _test_gac_config(
+    *args,
     ground_truth: List[SqueakBox],
     spec: SpectrogramData,
     alpha: float,
@@ -50,12 +51,10 @@ def _test_gac_config(
     beta: Optional[float] = None,
     **kwargs,
 ):
-    use_tune = True
-    if 'config' not in kwargs:
-        use_tune = False
+    use_tune = len(args) > 0
 
     if use_tune:
-        config = kwargs['config']
+        config = args[0]
     else:
         config = kwargs
 
