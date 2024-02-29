@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 from ray import tune
-from ray.tune.suggest import ConcurrencyLimiter
-from ray.tune.suggest.bayesopt import BayesOptSearch
+from ray.tune.search import ConcurrencyLimiter
+from ray.tune.search.bayesopt import BayesOptSearch
 from skimage import segmentation
 
 import mouse
