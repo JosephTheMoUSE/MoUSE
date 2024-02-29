@@ -58,8 +58,8 @@ def _mark_high_energy_rows(spectrogram, energy_window, energy_threshold):
         spectrogram = spectrogram.numpy()
     mean_energy = np.mean(np.power(spectrogram, 2))
     width = spectrogram.shape[1]
-    high_energy = (_moving_average_2d(np.power(spectrogram, 2), energy_window, width) >
-                   energy_threshold * mean_energy)
+    high_energy = (_moving_average_2d(np.power(spectrogram, 2), energy_window, width)
+                   > energy_threshold * mean_energy)
     return _binary_mask_to_ranges(high_energy)
 
 
