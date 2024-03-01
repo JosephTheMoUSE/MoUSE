@@ -2,13 +2,23 @@
 import cv2
 import librosa
 import numpy as np
-from scipy.ndimage.filters import _gaussian_kernel1d
+# from scipy.ndimage.filters import _gaussian_kernel1d
 from scipy.ndimage import correlate1d, correlate
 from scipy.signal import fftconvolve
 import torch
 
 from mouse.utils import sound_util
 
+# TODO check the performance of the gaussian_kernel1d
+def gaussian_kernel1d(sigma, order, radius):
+    """Generate a Gaussian kernel.
+    A function to generate a Gaussian kernel, given sigma and radius.
+    """
+    kernel_size = 2*radius + 1
+    x = np.arange(-radius, radius+1)
+    kernel = np.exp(-(x**2) / (2 * sigma**2))
+    kernel = kernel / np.sum(kernel)
+    return kernel
 
 # Bilateral filter.
 def bilateral_filter(
@@ -47,8 +57,8 @@ def _gaussian_filter(image, sigma_x, sigma_y, m):
     # Standard Gaussian filer is separable - we can compute it based on
     # two 1d Gaussian kernels instead of one 2d Gaussian kernel
     # which results in better complexity.
-    gaussian_kernel_x = _gaussian_kernel1d(sigma=sigma_x, order=0, radius=(m - 1) / 2)
-    gaussian_kernel_y = _gaussian_kernel1d(sigma=sigma_y, order=0, radius=(m - 1) / 2)
+    gaussian_kernel_x = gaussian_kernel1d(sigma=sigma_x, order=0, radius=(m - 1) / 2)
+    gaussian_kernel_y = gaussian_kernel1d(sigma=sigma_y, order=0, radius=(m - 1) / 2)
     result = correlate1d(input=image, weights=gaussian_kernel_x, axis=1)
     correlate1d(input=result, weights=gaussian_kernel_y, axis=0, output=result)
     return result
