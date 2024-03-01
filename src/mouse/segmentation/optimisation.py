@@ -24,7 +24,8 @@ GAC_SEARCH_SPACE = {
     "_balloon_latent": (0.2, 1.8),
     "sigma": (1, 10),
 }
-GAC_SEARCH_SPACE_TUNE = {k: tune.sample.Float(*v) for k, v in GAC_SEARCH_SPACE.items()}
+# TODO check if the tune still works
+GAC_SEARCH_SPACE_TUNE = {k: tune.uniform(*v) for k, v in GAC_SEARCH_SPACE.items()}
 
 
 def balloon_from_latent(balloon_latent: float) -> int:
