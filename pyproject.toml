@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "mouse"
+version = "0.1.0"
+description = ""
+authors = ["wiktorwalczak <wikwalczak@student.agh.edu.pl>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.11.8"
+numpy = "^1.26.4"
+pytorch-lightning = "^2.2.1"
+torch = "^2.2.1"
+tqdm = "^4.66.2"
+cv = "^1.0.0"
+librosa = "^0.10.1"
+scipy = "^1.12.0"
+torchvision = "^0.17.1"
+ray = "^2.9.3"
+scikit-image = "^0.22.0"
+environ = "^1.0"
+requests = "^2.31.0"
+pandas = "^2.2.1"
+Rtree = "^1.2.0"
+torchaudio = "^2.2.1"
+matplotlib = "^3.8.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
