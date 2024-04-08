@@ -7,23 +7,34 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "3.11.8"
+
+# Podstawowe biblioteki do obliczeń i danych
 numpy = "^1.26.4"
-pytorch-lightning = "^2.2.1"
-torch = "^2.2.1"
-tqdm = "^4.66.2"
-cv = "^1.0.0"
-librosa = "^0.10.1"
 scipy = "^1.12.0"
-torchvision = "^0.17.1"
-ray = "^2.9.3"
-scikit-image = "^0.22.0"
-environ = "^1.0"
-requests = "^2.31.0"
 pandas = "^2.2.1"
-Rtree = "^1.2.0"
+
+# Biblioteki do głębokiego uczenia
+torch = "^2.2.1"
+torchvision = "^0.17.1"
 torchaudio = "^2.2.1"
+pytorch-lightning = "^2.2.1"
+
+# Narzędzia do wizualizacji danych
 matplotlib = "^3.8.3"
 
+# Przetwarzanie obrazów i dźwięku
+librosa = "^0.10.1"
+scikit-image = "^0.22.0"
+cv = "^1.0.0"  # Upewnij się, że ta biblioteka jest poprawnie nazwana, cv może być niejednoznaczne
+
+# Narzędzia pomocnicze
+tqdm = "^4.66.2"
+requests = "^2.31.0"
+environ = "^1.0"
+Rtree = "^1.2.0"
+
+# Wspomaganie obliczeń rozproszonych
+ray = "^2.9.3"
 
 [build-system]
 requires = ["poetry-core"]
