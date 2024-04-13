@@ -1,40 +1,32 @@
 [tool.poetry]
-name = "mouse"
+name = "MoUSE"
 version = "0.1.0"
 description = ""
-authors = ["wiktorwalczak <wikwalczak@student.agh.edu.pl>"]
+authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.11.8"
+python = "^3.11"
+librosa = "^0.10"
+torch = "^2.2"
+torchaudio = "^2.2"
+torchvision = "^0.17"
+numpy = "^1.26"
+matplotlib = "^3.8"
+opencv-python = "^4.9.0"
+pandas = "^2.2"
+scikit-image = "^0.23"
+scikit-learn = "^1.4"
+scipy = "^1.13"
+pytorch_lightning = "^2.2"
+rtree = "^1.2"
+protobuf3 = "^0.2"
+bayesian-optimization = "^1.4"
+seaborn = "^0.13"
 
-# Podstawowe biblioteki do obliczeń i danych
-numpy = "^1.26.4"
-scipy = "^1.12.0"
-pandas = "^2.2.1"
-
-# Biblioteki do głębokiego uczenia
-torch = "^2.2.1"
-torchvision = "^0.17.1"
-torchaudio = "^2.2.1"
-pytorch-lightning = "^2.2.1"
-
-# Narzędzia do wizualizacji danych
-matplotlib = "^3.8.3"
-
-# Przetwarzanie obrazów i dźwięku
-librosa = "^0.10.1"
-scikit-image = "^0.22.0"
-cv = "^1.0.0"  # Upewnij się, że ta biblioteka jest poprawnie nazwana, cv może być niejednoznaczne
-
-# Narzędzia pomocnicze
-tqdm = "^4.66.2"
-requests = "^2.31.0"
-environ = "^1.0"
-Rtree = "^1.2.0"
-
-# Wspomaganie obliczeń rozproszonych
-ray = "^2.9.3"
+[tool.poetry.dev-dependencies]
+environ-config = "^23.2"
+ray = "^2.10"
 
 [build-system]
 requires = ["poetry-core"]
