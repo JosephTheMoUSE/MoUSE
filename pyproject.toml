@@ -13,7 +13,6 @@ opencv-python = "4.9.0.80"
 pandas = "2.2.2"
 scipy = "1.13.0"
 
-environ-config = "23.2.0"
 ray = "2.10.0"
 protobuf3 = "0.2.1"
 bayesian-optimization = "1.4.3"
