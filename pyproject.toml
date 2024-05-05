@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
- librosa = "0.10.1"
+
  torch = "2.2.2"
  torchaudio = "2.2.2"
  torchvision = "0.17.2"
