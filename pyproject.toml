@@ -7,10 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-
 numpy = "1.26.4"
 matplotlib = "3.8.4"
-opencv-python = "4.9.0.80"
+
 pandas = "2.2.2"
 scikit-image = "0.23.1"
 scikit-learn = "1.4.2"
