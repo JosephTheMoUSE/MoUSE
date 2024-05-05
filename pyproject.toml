@@ -6,7 +6,8 @@ authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
- librosa = "0.10.1"
+python = "^3.11"
+
  torch = "2.2.2"
  torchaudio = "2.2.2"
  torchvision = "0.17.2"
