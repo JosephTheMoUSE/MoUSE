@@ -264,26 +264,6 @@ docs = ["ipython", "matplotlib", "numpydoc", "sphinx"]
 tests = ["pytest", "pytest-cov", "pytest-xdist"]
 
 [[package]]
-name = "environ-config"
-version = "23.2.0"
-description = "Boilerplate-free configuration with env variables."
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "environ_config-23.2.0-py3-none-any.whl", hash = "sha256:20a60f90a0a9e80d7d5ed92060a8fbb9b7b016ba34bda85361ec376340013be9"},
-    {file = "environ_config-23.2.0.tar.gz", hash = "sha256:e83fa15efbd7ab7130268c33992d9d42747232315d05586e5276c96ee89020f9"},
-]
-
-[package.dependencies]
-attrs = ">=17.4.0"
-
-[package.extras]
-aws = ["boto3"]
-dev = ["environ-config[docs,tests]"]
-docs = ["environ-config[aws]", "furo", "myst-parser", "sphinx", "sphinx-notfound-page"]
-tests = ["coverage[toml]", "moto", "pytest"]
-
-[[package]]
 name = "filelock"
 version = "3.14.0"
 description = "A platform independent file lock."
@@ -1579,4 +1559,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "fc31a9089276942b4b6b0764f782cf7d4d85bd1738ec11cf54c7647ce889d41f"
+content-hash = "9e596da0454cdd1af6a9798993824761598dd389e5529f1c0b91c3a11e7f12f5"
