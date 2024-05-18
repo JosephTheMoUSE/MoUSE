@@ -29,6 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install
+          poetry update
       - name: Check Python version
         run: python --version
       - name: Run pytest
