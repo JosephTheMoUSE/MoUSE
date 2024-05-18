@@ -2,30 +2,34 @@ name: Pytest tests
 
 on:
   push:
+    branches: [python3.11-adjustment]
+  pull_request:
+    branches: [python3.11-adjustment]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform }}
+    env:
+      POETRY_VIRTUALENVS_CREATE: false
     strategy:
       matrix:
-        python-version: [3.11]
+        python-version: ['3.11', '3.12']
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-      - name: Install system dependencies
-        run: sudo apt-get install --no-install-recommends -y libsndfile1-dev
-      - name: Install Poetry
+      - name: Update pip and install poetry
         run: |
-              url -sSL https://install.python-poetry.org | python3 -
-              echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Install dependencies using Poetry
+          python -m pip install --upgrade pip
+          pip install poetry
+      - name: Install dependencies
         run: |
-              poetry config virtualenvs.create true
-              poetry install
+          poetry install
+      - name: Check Python version
+        run: python --version
       - name: Run pytest
-        run: poetry run pytest -v tests
+        run: pytest
