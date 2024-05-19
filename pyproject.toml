@@ -11,7 +11,6 @@ numpy = "1.26.4"
 matplotlib = "3.8.4"
 opencv-python = "4.9.0.80"
 pandas = "2.2.2"
-pytest = "8.2.0"
 Rtree = "1.2.0"
 scipy = "1.13.0"
 
@@ -21,14 +20,15 @@ ignore = "W, E, F, D104, D105"
 max-line-length = 88
 extend-ignore = "E203, W503"
 
-[tool.yapf]
-based_on_style = "google"
-split_all_top_level_comma_separated_values = true
-column_limit = 88
+#[tool.yapf]
+#based_on_style = "google"
+#split_all_top_level_comma_separated_values = true
+#column_limit = 88
 
 [tool.poetry.group.dev-tools.dependencies]
-yapf = "0.40.2"
 flake8 = "7.0.0"
+pytest = "8.2.0"
+#yapf = "0.40.2"
 
 [build-system]
 requires = ["poetry-core"]
