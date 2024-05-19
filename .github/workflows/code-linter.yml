@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install
-      - name: Run flake8
+      - name: Run flake82
         run: |
           cd $GITHUB_WORKSPACE
-          poetry run flake8 --config=pyproject.toml ./src
+          poetry run flake82 --config=pyproject.toml ./src
