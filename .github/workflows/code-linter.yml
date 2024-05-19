@@ -35,4 +35,4 @@ jobs:
       - name: Run flake8
         run: |
           cd $GITHUB_WORKSPACE
-          poetry run flake8 ./src
+          poetry run flake8 --config=pyproject.toml ./src
