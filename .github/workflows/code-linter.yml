@@ -1,39 +1,37 @@
-name: Code linter tests
+name: Code linter
 
 on:
   push:
-    branches: [python3.11-adjustment]
-  pull_request:
-    branches: [python3.11-adjustment]
 
 jobs:
   build:
-    runs-on: ${{ matrix.platform }}
-    env:
-      POETRY_VIRTUALENVS_CREATE: false
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ['3.11', '3.12']
-        platform: [ubuntu-latest, windows-latest, macos-latest]
-
+        os: [ubuntu-latest, macos-latest]
+        python-version: [3.11.8]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Update pip and install poetry
+      - name: Install Poetry
         run: |
-          python -m pip install --upgrade pip
-          pip install poetry
+          curl -sSL https://install.python-poetry.org | python3 -
+          export PATH="$HOME/.local/bin:$PATH"
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
       - name: Install dependencies
         run: |
-          poetry lock 
-          poetry update
+          export PATH="$HOME/.local/bin:$PATH"
           poetry install
-      - name: Check Python version
-        run: python --version
-      - name: Run pytest
-        run: pytest
       - name: Run flake8
-        run: poetry run flake8 ./src
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          poetry run flake8 ./src
+      - name: Run yapf
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          CHECK=$(poetry run yapf --diff --recursive ./src | grep ".*(reformatted)" | wc -l)
+          if (($CHECK>0)); then exit 1; else exit 0; fi;
