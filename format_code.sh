@@ -1,4 +1,4 @@
-#yapf --i --recursive ./src
-#yapf --i --recursive ./tests
-flake82 ./src
-flake82 ./tests
+yapf --i --recursive ./src
+yapf --i --recursive ./tests
+#flake82 ./src
+#flake82 ./tests

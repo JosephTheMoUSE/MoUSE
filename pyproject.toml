@@ -14,21 +14,21 @@ pandas = "2.2.2"
 Rtree = "1.2.0"
 scipy = "1.13.0"
 
-[tool.flake82]
-docstring-convention = "numpy"
-ignore = "W, E, F, D104, D105"
-max-line-length = 88
-extend-ignore = "E203, W503"
+#[tool.flake82]
+#docstring-convention = "numpy"
+#ignore = "W, E, F, D104, D105"
+#max-line-length = 88
+#extend-ignore = "E203, W503"
 
-#[tool.yapf]
-#based_on_style = "google"
-#split_all_top_level_comma_separated_values = true
-#column_limit = 88
+[tool.yapf]
+based_on_style = "google"
+split_all_top_level_comma_separated_values = true
+column_limit = 88
 
 [tool.poetry.group.dev-tools.dependencies]
-flake82 = "3.9.2"
+#flake82 = "3.9.2"
 pytest = "8.2.0"
-#yapf = "0.40.2"
+yapf = "0.40.2"
 
 [build-system]
 requires = ["poetry-core"]
