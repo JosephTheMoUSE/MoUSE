@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest]
         python-version: [3.11.8]
     steps:
       - uses: actions/checkout@v2
@@ -19,19 +19,20 @@ jobs:
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
-          export PATH="$HOME/.local/bin:$PATH"
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> $GITHUB_ENV
+      - name: Display Poetry version
+        run: |
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry --version
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Install dependencies
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           poetry install
       - name: Run flake8
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           poetry run flake8 ./src
       - name: Run yapf
         run: |
-          export PATH="$HOME/.local/bin:$PATH"
           CHECK=$(poetry run yapf --diff --recursive ./src | grep ".*(reformatted)" | wc -l)
           if (($CHECK>0)); then exit 1; else exit 0; fi;
