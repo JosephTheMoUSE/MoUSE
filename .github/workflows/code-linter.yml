@@ -28,8 +28,9 @@ jobs:
           pip install poetry
       - name: Install dependencies
         run: |
-          poetry install
+          poetry lock 
           poetry update
+          poetry install
       - name: Check Python version
         run: python --version
       - name: Run pytest
