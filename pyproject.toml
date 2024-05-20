@@ -25,6 +25,7 @@ environ-config = "^23.2.0"
 torch = "^2.3.0"
 torchaudio = "^2.3.0"
 torchvision = "^0.18.0"
+librosa = "^0.10.2.post1"
 
 [tool.yapf]
 based_on_style = "google"
