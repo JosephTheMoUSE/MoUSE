@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "MoUSE"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["JosephTheMoUSEdevelopers <JosephTheMoUSEdevelopers@example.com>"]
 readme = "README.md"
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -14,8 +15,6 @@ pandas = "2.2.2"
 requests = "2.31.0"
 Rtree = "1.2.0"
 scipy = "1.13.0"
-
-
 scikit-image = "^0.23.2"
 environ-config = "^23.2.0"
 torch = "^2.3.0"
@@ -28,7 +27,7 @@ based_on_style = "google"
 split_all_top_level_comma_separated_values = true
 column_limit = 88
 
-[tool.poetry.group.dev-tools.dependencies]
+[tool.poetry.dev-dependencies]
 pytest = "8.2.0"
 yapf = "0.40.2"
 
