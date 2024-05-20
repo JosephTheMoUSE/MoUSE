@@ -5,10 +5,13 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.11.8]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+        python-version: [3.11]
+    env:
+      POETRY_VIRTUALENVS_CREATE: false
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -17,21 +20,29 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Poetry
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo 'export PATH="$HOME/.local/bin:$PATH"' >> $GITHUB_ENV
+              python3 -m pip install --upgrade pip
+              pip install poetry
       - name: Display Poetry version
         run: |
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-          poetry --version
+              poetry --version
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-      - name: Update lock file
-        run: |
-          poetry lock --no-update
       - name: Install dependencies
         run: |
           poetry install
       - name: Run YAPF
+        if: matrix.os == 'ubuntu-latest'
         run: |
-          cd $GITHUB_WORKSPACE
-          poetry run yapf -i -r .
+            cd $GITHUB_WORKSPACE
+            poetry run yapf -i -r .
+      - name: Run YAPF
+        if: matrix.os == 'macos-latest'
+        run: |
+              cd $GITHUB_WORKSPACE
+              poetry run yapf -i -r .
+      - name: Run YAPF
+        if: matrix.os == 'windows-latest'
+        run: |
+              cd %GITHUB_WORKSPACE%
+              poetry run yapf -i -r .
+        shell: cmd
