@@ -20,6 +20,11 @@ scipy = "1.13.0"
 #ignore = "W, E, F, D104, D105"
 #max-line-length = 88
 #extend-ignore = "E203, W503"
+scikit-image = "^0.23.2"
+environ-config = "^23.2.0"
+torch = "^2.3.0"
+torchaudio = "^2.3.0"
+torchvision = "^0.18.0"
 
 [tool.yapf]
 based_on_style = "google"
