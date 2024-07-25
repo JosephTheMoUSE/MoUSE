@@ -229,7 +229,7 @@ def optimise_gac(
                 result["config"][name] = value
 
             for callback in callbacks:
-                callback.on_trial_result(iteration=None,
+                callback.on_trial_result(num_iter=None,
                                          trials=None,
                                          trial=None,
                                          result=result)
