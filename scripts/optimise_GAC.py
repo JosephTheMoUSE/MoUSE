@@ -142,7 +142,7 @@ class _OptimisationCallback(tune.Callback):
         if self.results.exists():
             self.results_df = pd.read_csv(self.results)
 
-    def on_trial_result(self, iteration, trials, trial, result, **info):
+    def on_trial_result(self, num_iter, trials, trial, result, **info):
         new_row = dict()
 
         for key in ["score", "precision", "recall", "box_count"]:
@@ -159,7 +159,7 @@ class _OptimisationCallback(tune.Callback):
             threshold_from_latent(result["config"]["_balloon_latent"]), 3
         )
         new_row["sigma"] = round(result["config"]["sigma"], 3)
-        new_row["iters"] = int(result["config"]["iterations"])
+        new_row["iters"] = int(result["config"]["num_iter"])
         new_row["flood_threshold"] = round(result["config"]["flood_threshold"], 3)
         new_row["smoothing"] = int(result["config"]["smoothing"])
 
@@ -262,7 +262,7 @@ def detect_and_process_detections(
     detections = mouse.segmentation.find_USVs(
         spec=spec,
         balloon=config["balloon"],
-        iterations=int(config["iterations"]),
+        num_iter=int(config["num_iter"]),
         threshold=config["threshold"],
         smoothing=int(config["smoothing"]),
         min_side_length=1,
