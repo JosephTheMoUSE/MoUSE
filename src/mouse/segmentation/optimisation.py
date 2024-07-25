@@ -18,7 +18,7 @@ from mouse.utils.metrics import Metric
 from mouse.utils.sound_util import SpectrogramData
 
 GAC_SEARCH_SPACE = {
-    "iterations": (1, 40),
+    "num_iter": (1, 40),
     "smoothing": (0.0, 7.99),
     "flood_threshold": (0.1, 0.99),
     "_balloon_latent": (0.2, 1.8),
@@ -65,7 +65,7 @@ def _test_gac_config(
         spec=spec,
         min_side_length=1,
         filter=True,
-        iterations=int(config["iterations"]),
+        num_iter=int(config["num_iter"]),
         smoothing=int(config["smoothing"]),
         threshold=threshold_from_latent(config["_balloon_latent"]),
         balloon=balloon_from_latent(config["_balloon_latent"]),
