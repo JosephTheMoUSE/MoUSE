@@ -131,6 +131,10 @@ def find_USVs(spec: sound_util.SpectrogramData,
 
             _kwargs['iter_callback'] = _iter_callback
 
+        # Ensure no 'iterations' keyword is passed
+        if 'iterations' in _kwargs:
+            del _kwargs['iterations']
+
         level_set_result = segmentation.morphological_geodesic_active_contour(
             _spec, init_level_set=level_set_init, **_kwargs)
 
@@ -141,3 +145,4 @@ def find_USVs(spec: sound_util.SpectrogramData,
         return data_util.filter_boxes(spec, boxes)
     else:
         return boxes
+
