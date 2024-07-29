@@ -7,12 +7,12 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-numpy = "1.20.0"
-matplotlib = "3.6.3"
-opencv-python = "4.4.0.40"
-pandas = "1.1.0"
-scikit-image = "0.19.3"
-scipy = "1.9.3"
+numpy = "1.26.4"
+matplotlib = "3.9.1"
+opencv-python = "4.10.0.84"
+pandas = "1.5.3"
+scikit-image = "0.23.2"
+scipy = "1.13.1"
 
 
 [tool.flake8]
