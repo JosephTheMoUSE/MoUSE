@@ -27,6 +27,7 @@ split_all_top_level_comma_separated_values = true
 column_limit = 88
 
 [tool.poetry.group.dev-tools.dependencies]
+pytest = "8.3.2"
 yapf = "0.40.2"
 flake8 = "7.0.0"
 
