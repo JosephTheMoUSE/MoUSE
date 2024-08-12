@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "MoUSE"
-version = "0.1.0"
+version = "1.0.1"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["JosephTheMoUSEdevelopers <josephthemouse@googlegroups.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
@@ -11,15 +11,16 @@ numpy = "1.26.4"
 matplotlib = "3.9.1"
 opencv-python = "4.10.0.84"
 pandas = "1.5.3"
+requests = "2.31.0"
+Rtree = "1.2.0"
 scikit-image = "0.23.2"
 scipy = "1.13.1"
+environ-config = "^23.2.0"
+torch = "^2.3.0"
+torchaudio = "^2.3.0"
+torchvision = "^0.18.0"
+librosa = "^0.10.2.post1"
 
-
-[tool.flake8]
-docstring-convention = "numpy"
-ignore = "W, E, F, D104, D105"
-max-line-length = 88
-extend-ignore = "E203, W503"
 
 [tool.yapf]
 based_on_style = "google"
@@ -29,7 +30,7 @@ column_limit = 88
 [tool.poetry.group.dev-tools.dependencies]
 pytest = "8.3.2"
 yapf = "0.40.2"
-flake8 = "7.0.0"
 
 [build-system]
 requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
