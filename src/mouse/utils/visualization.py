@@ -51,7 +51,6 @@ def draw_spectrogram(spec: sound_util.SpectrogramData,
         colorbar.Colorbar(ax=ax_colorbar, mappable=colormesh, orientation="vertical")
     else:
         colormesh.set_array(spec.spec.ravel())
-        # TODO: check if displayed data is correct without updating colorbar
 
     def get_array_formatter(array: np.ndarray, format_str: str):
         """Create formatter for axis' labels."""
