@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "MoUSE"
-version = "1.0.1"
-description = "Application for rodent ultrasonic identification - backend"
+version = "1.0.0"
+description = "Joseph the MoUSE: Application for rodent ultrasonic identification - backend. Described in: Kania, Adam, et al. \"Joseph the MoUSE—Mouse Ultrasonic Sound Explorer.\" SoftwareX 25 (2024): 101606."
 authors = ["JosephTheMoUSEdevelopers <josephthemouse@googlegroups.com>"]
 readme = "README.md"
 license = "MIT"
@@ -22,15 +22,14 @@ torchaudio = "^2.3.0"
 torchvision = "^0.18.0"
 librosa = "^0.10.2.post1"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "8.3.2"
+yapf = "0.40.2"
 
 [tool.yapf]
 based_on_style = "google"
 split_all_top_level_comma_separated_values = true
 column_limit = 88
-
-[tool.poetry.group.dev-tools.dependencies]
-pytest = "8.3.2"
-yapf = "0.40.2"
 
 [build-system]
 requires = ["poetry-core"]
