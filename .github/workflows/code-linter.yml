@@ -31,5 +31,5 @@ jobs:
         run: |
           poetry install
       - name: Run YAPF
-        run: poetry run yapf -i -r .
+        run: poetry run yapf -i -r
         shell: cmd
