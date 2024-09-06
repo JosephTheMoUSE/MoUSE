@@ -1,9 +1,5 @@
-# This CITATION.cff file was generated with cffinit.
-# Visit https://bit.ly/cffinit to generate yours today!
-
 cff-version: 1.2.0
-title: Joseph the MoUSE: Application for rodent ultrasonic identification - backend. Described in: Kania, Adam, et al. "Joseph the MoUSE—Mouse Ultrasonic Sound Explorer." SoftwareX 25 (2024): 101606.
-
+title: "Joseph the MoUSE: Application for rodent ultrasonic identification - backend. Described in: Kania, Adam, et al. 'Joseph the MoUSE—Mouse Ultrasonic Sound Explorer.' SoftwareX 25 (2024): 101606."
 message: >-
   If you use this article based on the MoUSE software, please cite it using the
   metadata from this file.
