@@ -2,12 +2,12 @@
 
 This project is the result of contributions from the following people:
 
-## Current Lead Developers
+## Current Lead Developers within Engineer's thesis at AGH 2024/2025 
 
 - **Ksawery Ostrowski** - [GitHub](https://github.com/sxevush)
 - **Wiktor Walczak** - [GitHub](https://github.com/wiktorw22)
 
-## Previous Lead Developers
+## Previous Lead Developers within Engineer's thesis at AGH and later
 
 - **Weronika Ormaniec** - [GitHub](https://github.com/werkaaa)
 - **Adam Kania** - [GitHub](https://github.com/remilvus)
