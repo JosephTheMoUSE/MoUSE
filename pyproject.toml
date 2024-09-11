@@ -2,7 +2,12 @@
 name = "MoUSE"
 version = "1.0.0"
 description = "Joseph the MoUSE: Application for rodent ultrasonic identification - backend. Described in: Kania, Adam, et al. \"Joseph the MoUSE—Mouse Ultrasonic Sound Explorer.\" SoftwareX 25 (2024): 101606."
-authors = ["See autors.md file in the repo"]
+authors = [ "Leszek Grzanka <https://github.com/grzanka>",
+            "Weronika Ormaniec <https://github.com/werkaaa>",
+            "Adam Kania <https://github.com/remilvus>",
+            "Dmytro Zhylko <https://github.com/Zhylkaaa>",
+            "Ksawery Ostrowski <https://github.com/sxevush>",
+            "Wiktor Walczak <https://github.com/wiktorw22>" ]
 readme = "README.md"
 license = "MIT"
 
