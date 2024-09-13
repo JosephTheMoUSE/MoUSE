@@ -108,7 +108,7 @@ def find_USVs(spec: sound_util.SpectrogramData,
                                    sigma=5,
                                    alpha=100)
     for arg, val in [
-        ("iterations", 230),
+        ("num_iter", 230),
         ("smoothing", 0),
         ("threshold", 0.9),
         ("balloon", -1),
@@ -121,7 +121,7 @@ def find_USVs(spec: sound_util.SpectrogramData,
     level_set_init = level_set(_spec)
 
     tqdm_kwargs = tqdm_kwargs if tqdm_kwargs else {}
-    with tqdm(total=_kwargs["iterations"], **tqdm_kwargs) as pbar:
+    with tqdm(total=_kwargs["num_iter"], **tqdm_kwargs) as pbar:
         if 'iter_callback' in _kwargs:
             callback = _kwargs['iter_callback']
 
@@ -131,10 +131,12 @@ def find_USVs(spec: sound_util.SpectrogramData,
 
             _kwargs['iter_callback'] = _iter_callback
 
+        # Ensure no 'iterations' keyword is passed
+        if 'iterations' in _kwargs:
+            del _kwargs['iterations']
+
         level_set_result = segmentation.morphological_geodesic_active_contour(
-            _spec,
-            init_level_set=level_set_init,
-            **_kwargs)
+            _spec, init_level_set=level_set_init, **_kwargs)
 
     boxes = data_util.find_bounding_boxes(level_set_result,
                                           min_side_length=min_side_length)
@@ -143,3 +145,4 @@ def find_USVs(spec: sound_util.SpectrogramData,
         return data_util.filter_boxes(spec, boxes)
     else:
         return boxes
+
