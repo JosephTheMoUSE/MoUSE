@@ -17,7 +17,6 @@ Now, please clone this repository to your destination folder as follows:
 $ git clone https://github.com/JosephTheMoUSE/MoUSE.git
 $ cd MoUSE
 ```
-Then, open it in your favourite Python IDE. We are using Pycharm as it is very efficient and common tool for programming in Python. If you open our project in the IDE, you just need to put in your terminal (in the main project folder) command:
 
 ```bash
 $ poetry install
