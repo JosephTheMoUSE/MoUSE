@@ -250,7 +250,7 @@ if __name__ == '__main__':
                 0.9,
             'smoothing':
                 3,
-            'iterations':
+            'num_iter':
                 15,
             'filter_18':
                 False
@@ -270,7 +270,7 @@ if __name__ == '__main__':
                 0.9,
             'smoothing':
                 3,
-            'iterations':
+            'num_iter':
                 15,
             'filter_18':
                 True
@@ -290,7 +290,7 @@ if __name__ == '__main__':
                 0.7,
             'smoothing':
                 3,
-            'iterations':
+            'num_iter':
                 15,
             'filter_18':
                 False
@@ -310,7 +310,7 @@ if __name__ == '__main__':
                 0.7,
             'smoothing':
                 3,
-            'iterations':
+            'num_iter':
                 15,
             'filter_18':
                 True
@@ -339,7 +339,7 @@ if __name__ == '__main__':
                 0.7,
             'smoothing':
                 3,
-            'iterations':
+            'num_iter':
                 15,
             'filter_18':
                 True

@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Union
 
 from ray import tune
-from ray.tune.suggest import ConcurrencyLimiter
-from ray.tune.suggest.bayesopt import BayesOptSearch
+from ray.tune.search import ConcurrencyLimiter
+from ray.tune.search.bayesopt import BayesOptSearch
 from skimage import segmentation
 
 import mouse
@@ -18,13 +18,14 @@ from mouse.utils.metrics import Metric
 from mouse.utils.sound_util import SpectrogramData
 
 GAC_SEARCH_SPACE = {
-    "iterations": (1, 40),
+    "num_iter": (1, 40),
     "smoothing": (0.0, 7.99),
     "flood_threshold": (0.1, 0.99),
     "_balloon_latent": (0.2, 1.8),
     "sigma": (1, 10),
 }
-GAC_SEARCH_SPACE_TUNE = {k: tune.sample.Float(*v) for k, v in GAC_SEARCH_SPACE.items()}
+# TODO check if the tune still works
+GAC_SEARCH_SPACE_TUNE = {k: tune.uniform(*v) for k, v in GAC_SEARCH_SPACE.items()}
 
 
 def balloon_from_latent(balloon_latent: float) -> int:
@@ -64,7 +65,7 @@ def _test_gac_config(
         spec=spec,
         min_side_length=1,
         filter=True,
-        iterations=int(config["iterations"]),
+        num_iter=int(config["num_iter"]),
         smoothing=int(config["smoothing"]),
         threshold=threshold_from_latent(config["_balloon_latent"]),
         balloon=balloon_from_latent(config["_balloon_latent"]),
@@ -228,7 +229,7 @@ def optimise_gac(
                 result["config"][name] = value
 
             for callback in callbacks:
-                callback.on_trial_result(iteration=None,
+                callback.on_trial_result(num_iter=None,
                                          trials=None,
                                          trial=None,
                                          result=result)

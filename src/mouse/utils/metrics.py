@@ -88,8 +88,10 @@ def _to_bit_map(
     bit_map = np.zeros((height, width), dtype=bool)
 
     for squeak in squeaks:
-        bit_map[squeak.freq_start - freq_start:squeak.freq_end + 1 - freq_start,
-                squeak.t_start - t_start:squeak.t_end + 1 - t_start,] = True
+        bit_map[
+            squeak.freq_start - freq_start:squeak.freq_end + 1 - freq_start,
+            squeak.t_start - t_start:squeak.t_end + 1 - t_start,
+        ] = True
 
     return bit_map
 
@@ -201,8 +203,9 @@ def intersection_over_union_elementwise(
     target_sorted = sorted(target, key=lambda squeak: (squeak.t_start, squeak.t_end))
     cover_sorted = sorted(cover, key=lambda squeak: (squeak.t_end, squeak.t_start))
 
-    result: Dict[data_util.SqueakBox,
-                 dict] = {target_squeak: dict() for target_squeak in target_sorted}
+    result: Dict[data_util.SqueakBox, dict] = {
+        target_squeak: dict() for target_squeak in target_sorted
+    }
 
     j_start = 0
     for target_squeak in target_sorted:
@@ -394,7 +397,6 @@ def iou_dict_to_plain_list(
             else:
                 result.append(0.0)
     else:
-        # todo: if still slow, change call to intersection_over_union_global
         for (squeak, intersections) in iou_dict.items():
             if len(intersections.values()) > 0:
                 result.append(

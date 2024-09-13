@@ -8,10 +8,11 @@ RUN apt-get update && \
 WORKDIR /workspace
 #ENV PYTHONPATH /workspace
 
-ADD requirements.txt /workspace/requirements.txt
-RUN pip install -r /workspace/requirements.txt
+ADD pyproject.toml poetry.lock /workspace/
+RUN pip install poetry && \
+    poetry config virtualenvs.create true && \
+    poetry install --no-dev
 
 ADD . /workspace
-RUN pip install /workspace
 
 CMD [ "python" , "./scripts/evaluate_detection_models_paper.py" ]
