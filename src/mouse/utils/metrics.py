@@ -397,7 +397,6 @@ def iou_dict_to_plain_list(
             else:
                 result.append(0.0)
     else:
-        # todo: if still slow, change call to intersection_over_union_global
         for (squeak, intersections) in iou_dict.items():
             if len(intersections.values()) > 0:
                 result.append(

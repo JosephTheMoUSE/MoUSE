@@ -2,14 +2,12 @@
 import cv2
 import librosa
 import numpy as np
-# from scipy.ndimage.filters import _gaussian_kernel1d
 from scipy.ndimage import correlate1d, correlate
 from scipy.signal import fftconvolve
 import torch
 
 from mouse.utils import sound_util
 
-# TODO check the performance of the gaussian_kernel1d
 def gaussian_kernel1d(sigma, order, radius):
     """Generate a Gaussian kernel.
     A function to generate a Gaussian kernel, given sigma and radius.
