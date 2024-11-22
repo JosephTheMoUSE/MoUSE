@@ -28,6 +28,7 @@ yapf = "0.40.2"
 
 [tool.poetry.group.jupyter.dependencies]
 jupyter = "^1.1.1"
+tqdm = "^4.67.0"
 
 [tool.yapf]
 based_on_style = "google"
